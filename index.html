@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Aura - Generador de Códigos QR Premium</title>
+  <meta name="description" content="Genera códigos QR personalizados con colores, degradados, formas únicas y logotipos. Comparte tu diseño directamente a través de un enlace.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Fullscreen Embed Container (Hidden by default, active only in embed mode) -->
+  <div id="embed-container" class="hidden">
+    <div class="embed-card">
+      <div id="embed-canvas-wrapper" class="qr-canvas-wrapper"></div>
+      <div class="embed-actions">
+        <button id="btn-embed-download-png" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-download"></i> Descargar PNG
+        </button>
+        <button id="btn-embed-download-svg" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-file-code"></i> SVG
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Normal Application Interface -->
+  <div id="app-wrapper">
+    <header class="app-header">
+      <div class="header-logo">
+        <div class="logo-icon">
+          <i class="fa-solid fa-qrcode-chasing"></i>
+          <span class="logo-glow"></span>
+        </div>
+        <div class="logo-text">
+          <h1>QR <span class="gradient-text">Aura</span></h1>
+          <p class="tagline">Personalización extrema & enlace instantáneo</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-share-top" class="btn btn-glass">
+          <i class="fa-solid fa-share-nodes"></i> Compartir
+        </button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- Left Column: Config Panel -->
+      <section class="config-section" aria-label="Panel de Configuración">
+        <!-- Tabs Navigation -->
+        <nav class="config-tabs" aria-label="Pestañas de personalización">
+          <button class="tab-btn active" data-tab="tab-content" id="tab-btn-content">
+            <i class="fa-solid fa-pen-nib"></i> Contenido
+          </button>
+          <button class="tab-btn" data-tab="tab-style" id="tab-btn-style">
+            <i class="fa-solid fa-palette"></i> Estilo QR
+          </button>
+          <button class="tab-btn" data-tab="tab-eyes" id="tab-btn-eyes">
+            <i class="fa-solid fa-eye"></i> Esquinas
+          </button>
+          <button class="tab-btn" data-tab="tab-logos" id="tab-btn-logos">
+            <i class="fa-solid fa-circle-user"></i> Logotipo
+          </button>
+        </nav>
+
+        <!-- Tab Contents -->
+        <div class="tab-panes">
+          
+          <!-- TAB 1: CONTENT -->
+          <div class="tab-pane active" id="tab-content">
+            <h2 class="pane-title">¿Qué contendrá tu código QR?</h2>
+            
+            <div class="input-group">
+              <label for="qr-data-type">Tipo de Contenido</label>
+              <div class="custom-select-wrapper">
+                <select id="qr-data-type">
+                  <option value="url" selected>Enlace Web (URL)</option>
+                  <option value="text">Texto Libre</option>
+                  <option value="email">Correo Electrónico</option>
+                  <option value="phone">Teléfono</option>
+                  <option value="wifi">Red Wi-Fi</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-arrow"></i>
+              </div>
+            </div>
+
+            <!-- Dynamic Input Areas based on content type -->
+            <div id="content-inputs">
+              <!-- URL Input -->
+              <div class="content-field" id="field-url">
+                <label for="input-url">Enlace o URL</label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-link input-icon"></i>
+                  <input type="url" id="input-url" placeholder="https://ejemplo.com" value="https://google.com">
+                </div>
+              </div>
+
+              <!-- Text Input -->
+              <div class="content-field hidden" id="field-text">
+                <label for="input-text">Texto</label>
+                <textarea id="input-text" rows="3" placeholder="Escribe aquí tu mensaje o texto libre..."></textarea>
+              </div>
+
+              <!-- Email Input -->
+              <div class="content-field hidden" id="field-email">
+                <div class="grid-2">
+                  <div>
+                    <label for="input-email-address">Correo Electrónico</label>
+                    <input type="email" id="input-email-address" placeholder="correo@ejemplo.com">
+                  </div>
+                  <div>
+                    <label for="input-email-subject">Asunto (Opcional)</label>
+                    <input type="text" id="input-email-subject" placeholder="Asunto del correo">
+                  </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                  <label for="input-email-body">Mensaje (Opcional)</label>
+                  <textarea id="input-email-body" rows="2" placeholder="Cuerpo del mensaje..."></textarea>
+                </div>
+              </div>
+
+              <!-- Phone Input -->
+              <div class="content-field hidden" id="field-phone">
+                <label for="input-phone">Número de Teléfono</label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-phone input-icon"></i>
+                  <input type="tel" id="input-phone" placeholder="+34 600 000 000">
+                </div>
+              </div>
+
+              <!-- Wi-Fi Input -->
+              <div class="content-field hidden" id="field-wifi">
+                <div class="grid-2">
+                  <div>
+                    <label for="input-wifi-ssid">Nombre de Red (SSID)</label>
+                    <input type="text" id="input-wifi-ssid" placeholder="MiRedWiFi">
+                  </div>
+                  <div>
+                    <label for="input-wifi-password">Contraseña</label>
+                    <input type="password" id="input-wifi-password" placeholder="••••••••">
+                  </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                  <label for="input-wifi-encryption">Seguridad</label>
+                  <div class="custom-select-wrapper">
+                    <select id="input-wifi-encryption">
+                      <option value="WPA" selected>WPA/WPA2</option>
+                      <option value="WEP">WEP</option>
+                      <option value="nopass">Sin Contraseña (Abierta)</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down select-arrow"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: STYLE QR -->
+          <div class="tab-pane" id="tab-style">
+            <h2 class="pane-title">Diseño y Colores de los Puntos</h2>
+
+            <!-- Data Dots Shape Selector -->
+            <div class="input-group">
+              <label>Forma de los Puntos (Píxeles)</label>
+              <div class="shape-grid" id="dot-shape-picker">
+                <button class="shape-card active" data-value="square">
+                  <div class="shape-preview shape-sq"></div>
+                  <span>Cuadrado</span>
+                </button>
+                <button class="shape-card" data-value="rounded">
+                  <div class="shape-preview shape-rd"></div>
+                  <span>Redondeado</span>
+                </button>
+                <button class="shape-card" data-value="dots">
+                  <div class="shape-preview shape-dt"></div>
+                  <span>Puntos</span>
+                </button>
+                <button class="shape-card" data-value="classy">
+                  <div class="shape-preview shape-cy"></div>
+                  <span>Elegante</span>
+                </button>
+                <button class="shape-card" data-value="classy-rounded">
+                  <div class="shape-preview shape-cr"></div>
+                  <span>Elegante Red.</span>
+                </button>
+                <button class="shape-card" data-value="extra-rounded">
+                  <div class="shape-preview shape-er"></div>
+                  <span>Ext. Redondo</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Colors Section -->
+            <div class="style-divider"></div>
+
+            <div class="input-group">
+              <div class="label-row">
+                <label>Color de los Puntos</label>
+                <div class="color-type-toggle">
+                  <button class="btn-toggle active" data-type="solid" id="dots-color-solid-btn">Sólido</button>
+                  <button class="btn-toggle" data-type="gradient" id="dots-color-gradient-btn">Degradado</button>
+                </div>
+              </div>
+
+              <!-- Solid Color Controls -->
+              <div id="dots-color-solid-group" class="color-control-group">
+                <div class="color-picker-input">
+                  <input type="color" id="dots-color-solid" value="#111827">
+                  <label for="dots-color-solid" class="color-hex-label" id="dots-color-solid-label">#111827</label>
+                </div>
+              </div>
+
+              <!-- Gradient Color Controls -->
+              <div id="dots-color-gradient-group" class="color-control-group hidden">
+                <div class="grid-2">
+                  <div>
+                    <label for="dots-grad-color1" class="sub-label">Color Inicial</label>
+                    <div class="color-picker-input">
+                      <input type="color" id="dots-grad-color1" value="#6366f1">
+                      <label for="dots-grad-color1" class="color-hex-label" id="dots-grad-color1-label">#6366f1</label>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="dots-grad-color2" class="sub-label">Color Final</label>
+                    <div class="color-picker-input">
+                      <input type="color" id="dots-grad-color2" value="#a855f7">
+                      <label for="dots-grad-color2" class="color-hex-label" id="dots-grad-color2-label">#a855f7</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="grid-2" style="margin-top: 1rem;">
+                  <div>
+                    <label for="dots-grad-type" class="sub-label">Tipo de Degradado</label>
+                    <div class="custom-select-wrapper">
+                      <select id="dots-grad-type">
+                        <option value="linear" selected>Lineal</option>
+                        <option value="radial">Radial</option>
+                      </select>
+                      <i class="fa-solid fa-chevron-down select-arrow"></i>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="dots-grad-rotation" class="sub-label">Rotación (°)</label>
+                    <div class="range-wrapper">
+                      <input type="range" id="dots-grad-rotation" min="0" max="360" value="45">
+                      <span class="range-val" id="dots-grad-rotation-val">45°</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Background Section -->
+            <div class="style-divider"></div>
+
+            <div class="input-group">
+              <div class="label-row">
+                <label>Fondo del QR</label>
+                <div class="color-type-toggle">
+                  <button class="btn-toggle active" data-type="solid" id="bg-color-solid-btn">Sólido</button>
+                  <button class="btn-toggle" data-type="gradient" id="bg-color-gradient-btn">Degradado</button>
+                  <button class="btn-toggle" data-type="transparent" id="bg-color-trans-btn">Transparente</button>
+                </div>
+              </div>
+
+              <!-- BG Solid Controls -->
+              <div id="bg-color-solid-group" class="color-control-group">
+                <div class="color-picker-input">
+                  <input type="color" id="bg-color-solid" value="#ffffff">
+                  <label for="bg-color-solid" class="color-hex-label" id="bg-color-solid-label">#FFFFFF</label>
+                </div>
+              </div>
+
+              <!-- BG Gradient Controls -->
+              <div id="bg-color-gradient-group" class="color-control-group hidden">
+                <div class="grid-2">
+                  <div>
+                    <label for="bg-grad-color1" class="sub-label">Color Inicial</label>
+                    <div class="color-picker-input">
+                      <input type="color" id="bg-grad-color1" value="#f8fafc">
+                      <label for="bg-grad-color1" class="color-hex-label" id="bg-grad-color1-label">#f8fafc</label>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="bg-grad-color2" class="sub-label">Color Final</label>
+                    <div class="color-picker-input">
+                      <input type="color" id="bg-grad-color2" value="#e2e8f0">
+                      <label for="bg-grad-color2" class="color-hex-label" id="bg-grad-color2-label">#e2e8f0</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="grid-2" style="margin-top: 1rem;">
+                  <div>
+                    <label for="bg-grad-type" class="sub-label">Tipo de Degradado</label>
+                    <div class="custom-select-wrapper">
+                      <select id="bg-grad-type">
+                        <option value="linear" selected>Lineal</option>
+                        <option value="radial">Radial</option>
+                      </select>
+                      <i class="fa-solid fa-chevron-down select-arrow"></i>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="bg-grad-rotation" class="sub-label">Rotación (°)</label>
+                    <div class="range-wrapper">
+                      <input type="range" id="bg-grad-rotation" min="0" max="360" value="135">
+                      <span class="range-val" id="bg-grad-rotation-val">135°</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: EYES -->
+          <div class="tab-pane" id="tab-eyes">
+            <h2 class="pane-title">Personalización de las Esquinas</h2>
+
+            <!-- Eye Frame (Corners Square) Shape Selector -->
+            <div class="input-group">
+              <label>Forma del Marco Exterior (Eye Frame)</label>
+              <div class="shape-grid" id="eye-frame-picker">
+                <button class="shape-card active" data-value="square">
+                  <div class="eye-shape-preview frame-sq"></div>
+                  <span>Cuadrado</span>
+                </button>
+                <button class="shape-card" data-value="extra-rounded">
+                  <div class="eye-shape-preview frame-er"></div>
+                  <span>Redondeado</span>
+                </button>
+                <button class="shape-card" data-value="dot">
+                  <div class="eye-shape-preview frame-dt"></div>
+                  <span>Circular</span>
+                </button>
+                <button class="shape-card" data-value="outy">
+                  <div class="eye-shape-preview frame-oy"></div>
+                  <span>Exterior R.</span>
+                </button>
+                <button class="shape-card" data-value="inny">
+                  <div class="eye-shape-preview frame-iy"></div>
+                  <span>Interior R.</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="style-divider"></div>
+
+            <!-- Eye Ball (Corners Dot) Shape Selector -->
+            <div class="input-group">
+              <label>Forma del Centro (Eye Ball)</label>
+              <div class="shape-grid" id="eye-ball-picker">
+                <button class="shape-card active" data-value="square">
+                  <div class="eye-shape-preview ball-sq"></div>
+                  <span>Cuadrado</span>
+                </button>
+                <button class="shape-card" data-value="dot">
+                  <div class="eye-shape-preview ball-dt"></div>
+                  <span>Circular</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="style-divider"></div>
+
+            <!-- Eye Color Settings -->
+            <div class="input-group">
+              <div class="label-row">
+                <label>Colores de las Esquinas</label>
+                <label class="switch-container">
+                  <input type="checkbox" id="sync-eyes-checkbox" checked>
+                  <span class="switch-slider"></span>
+                  <span class="switch-label">Igual al color de los puntos</span>
+                </label>
+              </div>
+
+              <!-- Eye Colors Controls (visible only when not synced) -->
+              <div id="eye-colors-container" class="hidden-fade transition-all duration-300">
+                <div class="style-box">
+                  <h3 class="style-box-title">Marco Exterior</h3>
+                  <div class="color-picker-input">
+                    <input type="color" id="eye-frame-color" value="#111827">
+                    <label for="eye-frame-color" class="color-hex-label" id="eye-frame-color-label">#111827</label>
+                  </div>
+                </div>
+
+                <div class="style-box" style="margin-top: 1rem;">
+                  <h3 class="style-box-title">Centro (Ball)</h3>
+                  <div class="color-picker-input">
+                    <input type="color" id="eye-ball-color" value="#111827">
+                    <label for="eye-ball-color" class="color-hex-label" id="eye-ball-color-label">#111827</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: LOGOS -->
+          <div class="tab-pane" id="tab-logos">
+            <h2 class="pane-title">Agregar Logotipo Central</h2>
+
+            <!-- Logo Preset Picker -->
+            <div class="input-group">
+              <label>Logotipos Populares</label>
+              <div class="logo-grid" id="logo-presets">
+                <button class="logo-card active" data-logo="none">
+                  <div class="logo-preview-icon"><i class="fa-solid fa-ban"></i></div>
+                  <span>Ninguno</span>
+                </button>
+                <button class="logo-card" data-logo="whatsapp">
+                  <div class="logo-preview-icon text-whatsapp"><i class="fa-brands fa-whatsapp"></i></div>
+                  <span>WhatsApp</span>
+                </button>
+                <button class="logo-card" data-logo="instagram">
+                  <div class="logo-preview-icon text-instagram"><i class="fa-brands fa-instagram"></i></div>
+                  <span>Instagram</span>
+                </button>
+                <button class="logo-card" data-logo="facebook">
+                  <div class="logo-preview-icon text-facebook"><i class="fa-brands fa-facebook"></i></div>
+                  <span>Facebook</span>
+                </button>
+                <button class="logo-card" data-logo="twitter">
+                  <div class="logo-preview-icon text-twitter"><i class="fa-brands fa-x-twitter"></i></div>
+                  <span>X / Twitter</span>
+                </button>
+                <button class="logo-card" data-logo="youtube">
+                  <div class="logo-preview-icon text-youtube"><i class="fa-brands fa-youtube"></i></div>
+                  <span>YouTube</span>
+                </button>
+                <button class="logo-card" data-logo="github">
+                  <div class="logo-preview-icon text-github"><i class="fa-brands fa-github"></i></div>
+                  <span>GitHub</span>
+                </button>
+                <button class="logo-card" data-logo="linkedin">
+                  <div class="logo-preview-icon text-linkedin"><i class="fa-brands fa-linkedin"></i></div>
+                  <span>LinkedIn</span>
+                </button>
+                <button class="logo-card" data-logo="wifi">
+                  <div class="logo-preview-icon text-wifi"><i class="fa-solid fa-wifi"></i></div>
+                  <span>Wi-Fi</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="style-divider"></div>
+
+            <!-- Custom Logo Uploader -->
+            <div class="input-group">
+              <label>O sube tu logotipo personalizado</label>
+              <div class="dropzone" id="logo-dropzone">
+                <input type="file" id="logo-file-input" accept="image/*">
+                <div class="dropzone-prompt">
+                  <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                  <p class="dropzone-main-text">Arrastra tu imagen aquí o <span>haz clic para buscar</span></p>
+                  <p class="dropzone-sub-text">Formatos recomendados: PNG o SVG con fondo transparente (Max 2MB)</p>
+                </div>
+                <div class="dropzone-preview hidden" id="logo-preview-container">
+                  <img id="logo-preview-img" src="" alt="Vista previa del logo">
+                  <button type="button" class="btn-remove-logo" id="btn-remove-logo">
+                    <i class="fa-solid fa-trash-can"></i> Quitar Logo
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Logo Sizing Options -->
+            <div id="logo-settings-group" class="hidden-fade transition-all duration-300">
+              <div class="style-divider"></div>
+              <div class="grid-2">
+                <div>
+                  <label for="logo-size" class="sub-label">Tamaño del Logo (%)</label>
+                  <div class="range-wrapper">
+                    <input type="range" id="logo-size" min="10" max="40" value="20">
+                    <span class="range-val" id="logo-size-val">20%</span>
+                  </div>
+                </div>
+                <div>
+                  <label for="logo-margin" class="sub-label">Margen de seguridad</label>
+                  <div class="range-wrapper">
+                    <input type="range" id="logo-margin" min="0" max="15" value="5">
+                    <span class="range-val" id="logo-margin-val">5px</span>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top: 1rem;">
+                <label class="switch-container">
+                  <input type="checkbox" id="logo-hide-dots" checked>
+                  <span class="switch-slider"></span>
+                  <span class="switch-label">Eliminar puntos detrás del logotipo</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Panel (Size, Padding, Error Correction) -->
+        <div class="advanced-section">
+          <button class="advanced-toggle" id="advanced-toggle">
+            <span><i class="fa-solid fa-sliders"></i> Ajustes del QR</span>
+            <i class="fa-solid fa-chevron-down arrow"></i>
+          </button>
+          
+          <div class="advanced-content hidden-height" id="advanced-content">
+            <div class="style-box">
+              <div class="grid-2">
+                <div>
+                  <label for="qr-size">Resolución (px)</label>
+                  <div class="range-wrapper">
+                    <input type="range" id="qr-size" min="200" max="1000" step="50" value="400">
+                    <span class="range-val" id="qr-size-val">400x400</span>
+                  </div>
+                </div>
+                <div>
+                  <label for="qr-margin">Margen Exterior</label>
+                  <div class="range-wrapper">
+                    <input type="range" id="qr-margin" min="0" max="60" step="5" value="15">
+                    <span class="range-val" id="qr-margin-val">15px</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top: 1.25rem;">
+                <label for="qr-error-correction">Corrección de Errores (ECC)</label>
+                <div class="custom-select-wrapper">
+                  <select id="qr-error-correction">
+                    <option value="L">L (7% Recuperación - Recomendado para QR simple)</option>
+                    <option value="M">M (15% Recuperación)</option>
+                    <option value="Q">Q (25% Recuperación)</option>
+                    <option value="H" selected>H (30% Recuperación - Necesario con logotipo)</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down select-arrow"></i>
+                </div>
+                <p class="input-hint">Un nivel más alto añade redundancia, facilitando la lectura si el código tiene un logo en el centro o está parcialmente cubierto.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Preview Pane -->
+      <section class="preview-section" aria-label="Vista Previa de QR">
+        <div class="preview-sticky-wrapper">
+          <div class="preview-card glass">
+            <div class="preview-header">
+              <span class="status-indicator-dot"></span>
+              <span class="status-text">Vista Previa Interactiva</span>
+            </div>
+            
+            <div class="qr-canvas-outer">
+              <div class="qr-glow-effect"></div>
+              <!-- QR Code Container -->
+              <div id="qr-canvas-container" class="qr-canvas-wrapper"></div>
+            </div>
+
+            <!-- Quick Info / Warning message if data is too long -->
+            <p id="qr-warning" class="qr-warning-msg hidden">
+              <i class="fa-solid fa-triangle-exclamation"></i> Demasiado contenido. Podría ser difícil de escanear.
+            </p>
+
+            <div class="actions-grid">
+              <button id="btn-download-png" class="btn btn-primary">
+                <i class="fa-solid fa-download"></i> Descargar PNG
+              </button>
+              <button id="btn-download-svg" class="btn btn-secondary">
+                <i class="fa-solid fa-file-code"></i> Descargar SVG
+              </button>
+            </div>
+          </div>
+
+          <!-- Share Panel below the QR code preview -->
+          <div class="share-card glass">
+            <h3><i class="fa-solid fa-share-nodes"></i> Enlaces de tu Código QR</h3>
+            <p class="share-desc">Comparte la configuración del diseño o muestra el QR de manera directa.</p>
+            
+            <div class="share-link-group">
+              <label for="share-url-editor">Enlace para Editar (Abre con todo tu diseño guardado)</label>
+              <div class="copy-input-wrapper">
+                <input type="text" id="share-url-editor" readonly value="">
+                <button class="btn btn-glass-icon btn-copy" data-target="share-url-editor" aria-label="Copiar enlace de editor">
+                  <i class="fa-regular fa-copy"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="share-link-group" style="margin-top: 1rem;">
+              <label for="share-url-embed">Enlace Directo / Embebido (Muestra solo el QR limpio)</label>
+              <div class="copy-input-wrapper">
+                <input type="text" id="share-url-embed" readonly value="">
+                <button class="btn btn-glass-icon btn-copy" data-target="share-url-embed" aria-label="Copiar enlace directo">
+                  <i class="fa-regular fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>&copy; 2026 QR Aura. Diseñado con pasión.</p>
+    </footer>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden">
+    <i class="fa-solid fa-circle-check toast-icon"></i>
+    <span id="toast-message">Copiado al portapapeles</span>
+  </div>
+
+  <!-- QR Code Styling Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.9.2/lib/qr-code-styling.min.js"></script>
+  
+  <!-- App JS -->
+  <script src="app.js"></script>
+</body>
+</html>

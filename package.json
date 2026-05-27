@@ -1,0 +1,17 @@
+{
+  "name": "qr-aura",
+  "version": "1.0.0",
+  "description": "Generador de códigos QR Premium altamente personalizables con enlaces compartibles.",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx -y serve ./"
+  },
+  "keywords": [
+    "qr",
+    "generator",
+    "customizable",
+    "glassmorphism"
+  ],
+  "author": "QR Aura Team",
+  "license": "MIT"
+}
