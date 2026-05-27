@@ -6,20 +6,16 @@
   <title>QR Aura - Generador de Códigos QR Premium</title>
   <meta name="description" content="Genera códigos QR personalizados con colores, degradados, formas únicas y logotipos. Comparte tu diseño directamente a través de un enlace.">
   
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
-  <!-- App Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Fullscreen Embed Container (Hidden by default, active only in embed mode) -->
   <div id="embed-container" class="hidden">
     <div class="embed-card">
       <div id="embed-canvas-wrapper" class="qr-canvas-wrapper"></div>
@@ -34,7 +30,6 @@
     </div>
   </div>
 
-  <!-- Normal Application Interface -->
   <div id="app-wrapper">
     <header class="app-header">
       <div class="header-logo">
@@ -55,9 +50,7 @@
     </header>
 
     <main class="app-main">
-      <!-- Left Column: Config Panel -->
       <section class="config-section" aria-label="Panel de Configuración">
-        <!-- Tabs Navigation -->
         <nav class="config-tabs" aria-label="Pestañas de personalización">
           <button class="tab-btn active" data-tab="tab-content" id="tab-btn-content">
             <i class="fa-solid fa-pen-nib"></i> Contenido
@@ -73,10 +66,8 @@
           </button>
         </nav>
 
-        <!-- Tab Contents -->
         <div class="tab-panes">
           
-          <!-- TAB 1: CONTENT -->
           <div class="tab-pane active" id="tab-content">
             <h2 class="pane-title">¿Qué contendrá tu código QR?</h2>
             
@@ -94,9 +85,7 @@
               </div>
             </div>
 
-            <!-- Dynamic Input Areas based on content type -->
             <div id="content-inputs">
-              <!-- URL Input -->
               <div class="content-field" id="field-url">
                 <label for="input-url">Enlace o URL</label>
                 <div class="input-with-icon">
@@ -105,13 +94,11 @@
                 </div>
               </div>
 
-              <!-- Text Input -->
               <div class="content-field hidden" id="field-text">
                 <label for="input-text">Texto</label>
                 <textarea id="input-text" rows="3" placeholder="Escribe aquí tu mensaje o texto libre..."></textarea>
               </div>
 
-              <!-- Email Input -->
               <div class="content-field hidden" id="field-email">
                 <div class="grid-2">
                   <div>
@@ -129,7 +116,6 @@
                 </div>
               </div>
 
-              <!-- Phone Input -->
               <div class="content-field hidden" id="field-phone">
                 <label for="input-phone">Número de Teléfono</label>
                 <div class="input-with-icon">
@@ -138,7 +124,6 @@
                 </div>
               </div>
 
-              <!-- Wi-Fi Input -->
               <div class="content-field hidden" id="field-wifi">
                 <div class="grid-2">
                   <div>
@@ -165,11 +150,9 @@
             </div>
           </div>
 
-          <!-- TAB 2: STYLE QR -->
           <div class="tab-pane" id="tab-style">
             <h2 class="pane-title">Diseño y Colores de los Puntos</h2>
 
-            <!-- Data Dots Shape Selector -->
             <div class="input-group">
               <label>Forma de los Puntos (Píxeles)</label>
               <div class="shape-grid" id="dot-shape-picker">
@@ -200,7 +183,6 @@
               </div>
             </div>
 
-            <!-- Colors Section -->
             <div class="style-divider"></div>
 
             <div class="input-group">
@@ -212,7 +194,6 @@
                 </div>
               </div>
 
-              <!-- Solid Color Controls -->
               <div id="dots-color-solid-group" class="color-control-group">
                 <div class="color-picker-input">
                   <input type="color" id="dots-color-solid" value="#111827">
@@ -220,7 +201,6 @@
                 </div>
               </div>
 
-              <!-- Gradient Color Controls -->
               <div id="dots-color-gradient-group" class="color-control-group hidden">
                 <div class="grid-2">
                   <div>
@@ -260,7 +240,6 @@
               </div>
             </div>
 
-            <!-- Background Section -->
             <div class="style-divider"></div>
 
             <div class="input-group">
@@ -273,7 +252,6 @@
                 </div>
               </div>
 
-              <!-- BG Solid Controls -->
               <div id="bg-color-solid-group" class="color-control-group">
                 <div class="color-picker-input">
                   <input type="color" id="bg-color-solid" value="#ffffff">
@@ -281,7 +259,6 @@
                 </div>
               </div>
 
-              <!-- BG Gradient Controls -->
               <div id="bg-color-gradient-group" class="color-control-group hidden">
                 <div class="grid-2">
                   <div>
@@ -322,11 +299,9 @@
             </div>
           </div>
 
-          <!-- TAB 3: EYES -->
           <div class="tab-pane" id="tab-eyes">
             <h2 class="pane-title">Personalización de las Esquinas</h2>
 
-            <!-- Eye Frame (Corners Square) Shape Selector -->
             <div class="input-group">
               <label>Forma del Marco Exterior (Eye Frame)</label>
               <div class="shape-grid" id="eye-frame-picker">
@@ -355,7 +330,6 @@
 
             <div class="style-divider"></div>
 
-            <!-- Eye Ball (Corners Dot) Shape Selector -->
             <div class="input-group">
               <label>Forma del Centro (Eye Ball)</label>
               <div class="shape-grid" id="eye-ball-picker">
@@ -372,7 +346,6 @@
 
             <div class="style-divider"></div>
 
-            <!-- Eye Color Settings -->
             <div class="input-group">
               <div class="label-row">
                 <label>Colores de las Esquinas</label>
@@ -383,7 +356,6 @@
                 </label>
               </div>
 
-              <!-- Eye Colors Controls (visible only when not synced) -->
               <div id="eye-colors-container" class="hidden-fade transition-all duration-300">
                 <div class="style-box">
                   <h3 class="style-box-title">Marco Exterior</h3>
@@ -404,11 +376,9 @@
             </div>
           </div>
 
-          <!-- TAB 4: LOGOS -->
           <div class="tab-pane" id="tab-logos">
             <h2 class="pane-title">Agregar Logotipo Central</h2>
 
-            <!-- Logo Preset Picker -->
             <div class="input-group">
               <label>Logotipos Populares</label>
               <div class="logo-grid" id="logo-presets">
@@ -453,7 +423,6 @@
 
             <div class="style-divider"></div>
 
-            <!-- Custom Logo Uploader -->
             <div class="input-group">
               <label>O sube tu logotipo personalizado</label>
               <div class="dropzone" id="logo-dropzone">
@@ -472,7 +441,6 @@
               </div>
             </div>
 
-            <!-- Logo Sizing Options -->
             <div id="logo-settings-group" class="hidden-fade transition-all duration-300">
               <div class="style-divider"></div>
               <div class="grid-2">
@@ -502,7 +470,6 @@
           </div>
         </div>
 
-        <!-- Advanced Panel (Size, Padding, Error Correction) -->
         <div class="advanced-section">
           <button class="advanced-toggle" id="advanced-toggle">
             <span><i class="fa-solid fa-sliders"></i> Ajustes del QR</span>
@@ -546,7 +513,6 @@
         </div>
       </section>
 
-      <!-- Right Column: Preview Pane -->
       <section class="preview-section" aria-label="Vista Previa de QR">
         <div class="preview-sticky-wrapper">
           <div class="preview-card glass">
@@ -557,11 +523,10 @@
             
             <div class="qr-canvas-outer">
               <div class="qr-glow-effect"></div>
-              <!-- QR Code Container -->
               <div id="qr-canvas-container" class="qr-canvas-wrapper"></div>
             </div>
 
-            <!-- Quick Info / Warning message if data is too long -->
+    
             <p id="qr-warning" class="qr-warning-msg hidden">
               <i class="fa-solid fa-triangle-exclamation"></i> Demasiado contenido. Podría ser difícil de escanear.
             </p>
@@ -576,15 +541,19 @@
             </div>
           </div>
 
-          <!-- Share Panel below the QR code preview -->
           <div class="share-card glass">
-            <h3><i class="fa-solid fa-share-nodes"></i> Enlaces de tu Código QR</h3>
-            <p class="share-desc">Comparte la configuración del diseño o muestra el QR de manera directa.</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <h3 style="margin:0"><i class="fa-solid fa-share-nodes"></i> Enlaces de tu Código QR</h3>
+              <button id="btn-generate-links" class="btn btn-primary btn-sm" style="margin-left: 10px;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Generar
+              </button>
+            </div>
+            <p class="share-desc">Guarda y obtén enlaces cortos para compartir la configuración o mostrar el QR limpio.</p>
             
             <div class="share-link-group">
-              <label for="share-url-editor">Enlace para Editar (Abre con todo tu diseño guardado)</label>
+              <label for="share-url-editor">Enlace para Editar</label>
               <div class="copy-input-wrapper">
-                <input type="text" id="share-url-editor" readonly value="">
+                <input type="text" id="share-url-editor" readonly placeholder="Haz clic en Generar...">
                 <button class="btn btn-glass-icon btn-copy" data-target="share-url-editor" aria-label="Copiar enlace de editor">
                   <i class="fa-regular fa-copy"></i>
                 </button>
@@ -592,9 +561,9 @@
             </div>
 
             <div class="share-link-group" style="margin-top: 1rem;">
-              <label for="share-url-embed">Enlace Directo / Embebido (Muestra solo el QR limpio)</label>
+              <label for="share-url-embed">Enlace Directo / Embebido</label>
               <div class="copy-input-wrapper">
-                <input type="text" id="share-url-embed" readonly value="">
+                <input type="text" id="share-url-embed" readonly placeholder="Haz clic en Generar...">
                 <button class="btn btn-glass-icon btn-copy" data-target="share-url-embed" aria-label="Copiar enlace directo">
                   <i class="fa-regular fa-copy"></i>
                 </button>
@@ -610,16 +579,16 @@
     </footer>
   </div>
 
-  <!-- Toast Notification -->
+
   <div id="toast" class="toast hidden">
     <i class="fa-solid fa-circle-check toast-icon"></i>
     <span id="toast-message">Copiado al portapapeles</span>
   </div>
 
-  <!-- QR Code Styling Library -->
+
   <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.9.2/lib/qr-code-styling.min.js"></script>
   
-  <!-- App JS -->
+
   <script src="app.js"></script>
 </body>
 </html>
