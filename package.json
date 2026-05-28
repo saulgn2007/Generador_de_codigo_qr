@@ -9,16 +9,9 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.1",
-    "mysql2": "^3.11.3"
+    "express": "^4.21.1"
   },
-  "keywords": [
-    "qr",
-    "generator",
-    "customizable",
-    "glassmorphism"
-  ],
+  "keywords": ["qr", "generator", "customizable"],
   "author": "QR Aura Team",
   "license": "MIT"
 }

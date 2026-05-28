@@ -31,23 +31,7 @@
   </div>
 
   <div id="app-wrapper">
-    <header class="app-header">
-      <div class="header-logo">
-        <div class="logo-icon">
-          <i class="fa-solid fa-qrcode-chasing"></i>
-          <span class="logo-glow"></span>
-        </div>
-        <div class="logo-text">
-          <h1>QR <span class="gradient-text">Aura</span></h1>
-          <p class="tagline">Personalización extrema & enlace instantáneo</p>
-        </div>
-      </div>
-      <div class="header-actions">
-        <button id="btn-share-top" class="btn btn-glass">
-          <i class="fa-solid fa-share-nodes"></i> Compartir
-        </button>
-      </div>
-    </header>
+
 
     <main class="app-main">
       <section class="config-section" aria-label="Panel de Configuración">
@@ -531,37 +515,14 @@
               <button id="btn-download-svg" class="btn btn-secondary">
                 <i class="fa-solid fa-file-code"></i> Descargar SVG
               </button>
-            </div>
-          </div>
-
-          <div class="share-card glass">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <h3 style="margin:0"><i class="fa-solid fa-share-nodes"></i> Enlaces de tu Código QR</h3>
-              <button id="btn-generate-links" class="btn btn-primary btn-sm" style="margin-left: 10px;">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Generar
+              <button id="btn-generate-links" class="btn btn-primary" style="grid-column: 1 / -1;">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar
               </button>
             </div>
-            <p class="share-desc">Guarda y obtén enlaces cortos para compartir la configuración o mostrar el QR limpio.</p>
-            
-            <div class="share-link-group">
-              <label for="share-url-editor">Enlace para Editar</label>
-              <div class="copy-input-wrapper">
-                <input type="text" id="share-url-editor" readonly placeholder="Haz clic en Generar...">
-                <button class="btn btn-glass-icon btn-copy" data-target="share-url-editor" aria-label="Copiar enlace de editor">
-                  <i class="fa-regular fa-copy"></i>
-                </button>
-              </div>
-            </div>
 
-            <div class="share-link-group" style="margin-top: 1rem;">
-              <label for="share-url-embed">Enlace Directo / Embebido</label>
-              <div class="copy-input-wrapper">
-                <input type="text" id="share-url-embed" readonly placeholder="Haz clic en Generar...">
-                <button class="btn btn-glass-icon btn-copy" data-target="share-url-embed" aria-label="Copiar enlace directo">
-                  <i class="fa-regular fa-copy"></i>
-                </button>
-              </div>
-            </div>
+            <!-- Hidden inputs needed by app.js -->
+            <input type="hidden" id="share-url-editor">
+            <input type="hidden" id="share-url-embed">
           </div>
         </div>
       </section>

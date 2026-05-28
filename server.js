@@ -11,21 +11,17 @@ db.initDb();
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '5mb' })); // Allows large configurations and potential base64 logos
+app.use(express.json({ limit: '5mb' }));
 
-// Serve static frontend files from current directory
-// Avoid exposing backend files directly
-const staticOptions = {
-  index: ['index.html']
-};
-app.use(express.static(__dirname, staticOptions));
+// Serve static frontend files
+app.use(express.static(__dirname));
 
 // ==========================================
 // API Endpoints
 // ==========================================
 
 // Save configuration and return short ID
-app.post('/api/save', async (req, res) => {
+app.post('/api/save', (req, res) => {
   try {
     const { name, config } = req.body;
     if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -34,9 +30,13 @@ app.post('/api/save', async (req, res) => {
     if (!config || Object.keys(config).length === 0) {
       return res.status(400).json({ error: 'Configuración inválida' });
     }
-    
-    const id = await db.saveLink(name.trim(), config);
-    res.json({ id, url: `${req.protocol}://${req.get('host')}/e/${id}`, embedUrl: `${req.protocol}://${req.get('host')}/q/${id}` });
+
+    const id = db.saveLink(name.trim(), config);
+    res.json({
+      id,
+      url: `${req.protocol}://${req.get('host')}/e/${id}`,
+      embedUrl: `${req.protocol}://${req.get('host')}/q/${id}`
+    });
   } catch (error) {
     console.error('Save error:', error);
     res.status(500).json({ error: 'Error al guardar la configuración' });
@@ -44,9 +44,9 @@ app.post('/api/save', async (req, res) => {
 });
 
 // Get all saved QR links
-app.get('/api/qrs', async (req, res) => {
+app.get('/api/qrs', (req, res) => {
   try {
-    const qrs = await db.getAllLinks();
+    const qrs = db.getAllLinks();
     res.json(qrs);
   } catch (error) {
     console.error('List error:', error);
@@ -55,9 +55,9 @@ app.get('/api/qrs', async (req, res) => {
 });
 
 // Delete configuration by short ID
-app.delete('/api/config/:id', async (req, res) => {
+app.delete('/api/config/:id', (req, res) => {
   try {
-    await db.deleteLink(req.params.id);
+    db.deleteLink(req.params.id);
     res.json({ success: true });
   } catch (error) {
     console.error('Delete error:', error);
@@ -66,9 +66,9 @@ app.delete('/api/config/:id', async (req, res) => {
 });
 
 // Retrieve configuration by short ID
-app.get('/api/config/:id', async (req, res) => {
+app.get('/api/config/:id', (req, res) => {
   try {
-    const config = await db.getLink(req.params.id);
+    const config = db.getLink(req.params.id);
     if (!config) {
       return res.status(404).json({ error: 'Código no encontrado' });
     }
@@ -83,12 +83,10 @@ app.get('/api/config/:id', async (req, res) => {
 // Frontend Routing for Short Links
 // ==========================================
 
-// Editor Route: /e/:id -> serves index.html, which will load config from /api/config/:id via frontend JS
 app.get('/e/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Embed Route: /q/:id -> serves index.html, frontend JS will detect /q/ route and show clean embed
 app.get('/q/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });

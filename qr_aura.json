@@ -1,0 +1,49 @@
+{
+  "links": [
+    {
+      "id": "supkj8",
+      "name": "google",
+      "config": {
+        "dataType": "url",
+        "inputUrl": "https://google.com",
+        "inputText": "",
+        "inputEmailAddress": "",
+        "inputEmailSubject": "",
+        "inputEmailBody": "",
+        "inputPhone": "",
+        "inputWifiSsid": "",
+        "inputWifiPassword": "",
+        "inputWifiEncryption": "WPA",
+        "dotShape": "square",
+        "dotsColorType": "solid",
+        "dotsColorSolid": "#111827",
+        "dotsColorGrad1": "#6366f1",
+        "dotsColorGrad2": "#a855f7",
+        "dotsColorGradType": "linear",
+        "dotsColorGradRotation": 45,
+        "bgColorType": "solid",
+        "bgColorSolid": "#ffffff",
+        "bgColorGrad1": "#f8fafc",
+        "bgColorGrad2": "#e2e8f0",
+        "bgColorGradType": "linear",
+        "bgColorGradRotation": 135,
+        "eyeFrameShape": "square",
+        "eyeBallShape": "square",
+        "syncEyes": true,
+        "eyeFrameColor": "#111827",
+        "eyeBallColor": "#111827",
+        "logoPreset": "none",
+        "logoCustom": null,
+        "logoCustomName": null,
+        "logoSize": 20,
+        "logoMargin": 5,
+        "logoHideDots": true,
+        "qrSize": 400,
+        "qrMargin": 15,
+        "qrEcc": "H",
+        "embed": false
+      },
+      "created_at": "2026-05-28T10:46:08.005Z"
+    }
+  ]
+}
