@@ -16,13 +16,29 @@ const pool = mysql.createPool({
 async function initDb() {
   try {
     const connection = await pool.getConnection();
+    
+    // Create table with name column if it doesn't exist
     await connection.query(`
       CREATE TABLE IF NOT EXISTS qr_links (
         id VARCHAR(10) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
         config JSON NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Migration logic: check if 'name' column exists in existing database
+    const [columns] = await connection.query(`
+      SHOW COLUMNS FROM qr_links LIKE 'name'
+    `);
+    
+    if (columns.length === 0) {
+      await connection.query(`
+        ALTER TABLE qr_links ADD COLUMN name VARCHAR(255) NOT NULL DEFAULT 'Código QR sin nombre'
+      `);
+      console.log('✅ Migración: Columna "name" añadida a la tabla qr_links');
+    }
+
     connection.release();
     console.log('✅ Base de datos MySQL inicializada');
   } catch (err) {
@@ -42,16 +58,16 @@ function generateShortId() {
 }
 
 // Save a new configuration and return the short ID
-async function saveLink(config) {
+async function saveLink(name, config) {
   const id = generateShortId();
   try {
-    await pool.query('INSERT INTO qr_links (id, config) VALUES (?, ?)', [id, JSON.stringify(config)]);
+    await pool.query('INSERT INTO qr_links (id, name, config) VALUES (?, ?, ?)', [id, name, JSON.stringify(config)]);
     return id;
   } catch (error) {
     // Basic collision fallback: try one more time if duplicate
     if (error.code === 'ER_DUP_ENTRY') {
       const newId = generateShortId();
-      await pool.query('INSERT INTO qr_links (id, config) VALUES (?, ?)', [newId, JSON.stringify(config)]);
+      await pool.query('INSERT INTO qr_links (id, name, config) VALUES (?, ?, ?)', [newId, name, JSON.stringify(config)]);
       return newId;
     }
     throw error;
@@ -67,8 +83,21 @@ async function getLink(id) {
   return null;
 }
 
+// Get all saved QR links
+async function getAllLinks() {
+  const [rows] = await pool.query('SELECT id, name, config, created_at FROM qr_links ORDER BY created_at DESC');
+  return rows;
+}
+
+// Delete a saved QR link
+async function deleteLink(id) {
+  await pool.query('DELETE FROM qr_links WHERE id = ?', [id]);
+}
+
 module.exports = {
   initDb,
   saveLink,
-  getLink
+  getLink,
+  getAllLinks,
+  deleteLink
 };

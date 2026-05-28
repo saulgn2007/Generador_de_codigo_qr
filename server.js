@@ -27,16 +27,41 @@ app.use(express.static(__dirname, staticOptions));
 // Save configuration and return short ID
 app.post('/api/save', async (req, res) => {
   try {
-    const config = req.body;
+    const { name, config } = req.body;
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return res.status(400).json({ error: 'El nombre es obligatorio' });
+    }
     if (!config || Object.keys(config).length === 0) {
       return res.status(400).json({ error: 'Configuración inválida' });
     }
     
-    const id = await db.saveLink(config);
+    const id = await db.saveLink(name.trim(), config);
     res.json({ id, url: `${req.protocol}://${req.get('host')}/e/${id}`, embedUrl: `${req.protocol}://${req.get('host')}/q/${id}` });
   } catch (error) {
     console.error('Save error:', error);
     res.status(500).json({ error: 'Error al guardar la configuración' });
+  }
+});
+
+// Get all saved QR links
+app.get('/api/qrs', async (req, res) => {
+  try {
+    const qrs = await db.getAllLinks();
+    res.json(qrs);
+  } catch (error) {
+    console.error('List error:', error);
+    res.status(500).json({ error: 'Error al recuperar los códigos QR' });
+  }
+});
+
+// Delete configuration by short ID
+app.delete('/api/config/:id', async (req, res) => {
+  try {
+    await db.deleteLink(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete error:', error);
+    res.status(500).json({ error: 'Error al eliminar el código QR' });
   }
 });
 

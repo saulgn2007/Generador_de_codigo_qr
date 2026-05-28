@@ -567,6 +567,19 @@
       </section>
     </main>
 
+    <!-- Sección de Códigos QR Guardados -->
+    <section class="saved-qrs-section glass" aria-label="Códigos QR Guardados">
+      <div class="saved-qrs-header">
+        <h2><i class="fa-solid fa-folder-open"></i> Mis Códigos QR <span class="gradient-text">Guardados</span></h2>
+        <button id="btn-refresh-qrs" class="btn btn-glass btn-sm">
+          <i class="fa-solid fa-arrows-rotate"></i> Actualizar
+        </button>
+      </div>
+      <div class="saved-qrs-grid" id="saved-qrs-grid">
+        <!-- Las tarjetas se inyectarán dinámicamente -->
+      </div>
+    </section>
+
     <footer class="app-footer">
       <p>&copy; 2026 QR Aura. Diseñado con pasión.</p>
     </footer>
@@ -576,6 +589,34 @@
   <div id="toast" class="toast hidden">
     <i class="fa-solid fa-circle-check toast-icon"></i>
     <span id="toast-message">Copiado al portapapeles</span>
+  </div>
+
+
+  <!-- Modal para guardar código QR con nombre obligatorio -->
+  <div id="save-modal" class="modal-overlay hidden">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-floppy-disk"></i> Guardar Código QR</h3>
+        <button id="btn-close-modal" class="btn-close" aria-label="Cerrar modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Asigna un nombre a este código QR para poder identificarlo y acceder a él en tu lista de guardados.</p>
+        <div class="input-group" style="margin-top: 1.25rem;">
+          <label for="qr-save-name">Nombre del Código QR <span class="required">*</span></label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-tag input-icon"></i>
+            <input type="text" id="qr-save-name" placeholder="Ej. QR de mi Portafolio" required>
+          </div>
+          <span id="save-name-error" class="input-error-msg hidden">El nombre es obligatorio y no puede contener solo espacios.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-save" class="btn btn-secondary">Cancelar</button>
+        <button id="btn-confirm-save" class="btn btn-primary">
+          <i class="fa-solid fa-check"></i> Guardar Código
+        </button>
+      </div>
+    </div>
   </div>
 
 

@@ -743,19 +743,72 @@ function bindDomEvents() {
   bindElementEvent('btn-share-top', 'click', generateShareLinks);
   bindElementEvent('btn-generate-links', 'click', generateShareLinks);
   
+  bindElementEvent('btn-close-modal', 'click', closeSaveModal);
+  bindElementEvent('btn-cancel-save', 'click', closeSaveModal);
+  bindElementEvent('btn-confirm-save', 'click', handleConfirmSave);
+  bindElementEvent('btn-refresh-qrs', 'click', loadSavedQrs);
+
+  const saveModalEl = document.getElementById('save-modal');
+  if (saveModalEl) {
+    saveModalEl.addEventListener('click', (e) => {
+      if (e.target === saveModalEl) {
+        closeSaveModal();
+      }
+    });
+  }
+  
   bindElementEvent('btn-download-png', 'click', () => downloadQr('png'));
   bindElementEvent('btn-download-svg', 'click', () => downloadQr('svg'));
   bindElementEvent('btn-embed-download-png', 'click', () => downloadQr('png'));
   bindElementEvent('btn-embed-download-svg', 'click', () => downloadQr('svg'));
 }
 
+function openSaveModal() {
+  const modal = document.getElementById('save-modal');
+  const input = document.getElementById('qr-save-name');
+  const errorMsg = document.getElementById('save-name-error');
+  if (modal && input) {
+    input.value = '';
+    if (errorMsg) errorMsg.classList.add('hidden');
+    modal.classList.remove('hidden');
+    input.focus();
+  }
+}
+
+function closeSaveModal() {
+  const modal = document.getElementById('save-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleConfirmSave() {
+  const input = document.getElementById('qr-save-name');
+  const errorMsg = document.getElementById('save-name-error');
+  if (!input) return;
+  
+  const qrName = input.value.trim();
+  if (qrName === '') {
+    if (errorMsg) errorMsg.classList.remove('hidden');
+    input.focus();
+    return;
+  }
+  
+  if (errorMsg) errorMsg.classList.add('hidden');
+  closeSaveModal();
+  
+  await generateShareLinksWithName(qrName);
+}
+
 async function generateShareLinks() {
-  showToast("Generando enlaces...");
+  openSaveModal();
+}
+
+async function generateShareLinksWithName(qrName) {
+  showToast("Guardando y generando enlaces...");
   try {
     const response = await fetch('/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(qrState)
+      body: JSON.stringify({ name: qrName, config: qrState })
     });
     
     if (!response.ok) throw new Error('Error al guardar');
@@ -768,10 +821,165 @@ async function generateShareLinks() {
     if (editorInput) editorInput.value = data.url;
     if (embedInput) embedInput.value = data.embedUrl;
     
-    showToast("¡Enlaces generados con éxito!");
+    showToast("¡Código QR guardado y enlaces generados con éxito!");
+    await loadSavedQrs();
   } catch (error) {
     console.error(error);
-    showToast("Error al generar enlaces", true);
+    showToast("Error al guardar el código QR", true);
+  }
+}
+
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+async function loadSavedQrs() {
+  const grid = document.getElementById('saved-qrs-grid');
+  if (!grid) return;
+  
+  try {
+    const response = await fetch('/api/qrs');
+    if (!response.ok) throw new Error('Error al cargar QRs guardados');
+    
+    const qrs = await response.json();
+    grid.innerHTML = '';
+    
+    if (qrs.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-qrcode"></i>
+          <p>No tienes códigos QR guardados aún.</p>
+          <span>Genera un nuevo QR y asígnale un nombre para guardarlo aquí.</span>
+        </div>
+      `;
+      return;
+    }
+    
+    qrs.forEach(qr => {
+      const card = document.createElement('div');
+      card.className = 'qr-saved-card';
+      
+      const formattedDate = new Date(qr.created_at).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const host = window.location.origin;
+      const editorUrl = `${host}/e/${qr.id}`;
+      const embedUrl = `${host}/q/${qr.id}`;
+      
+      card.innerHTML = `
+        <div class="qr-saved-card-header">
+          <div class="qr-saved-icon">
+            <i class="fa-solid fa-qrcode"></i>
+          </div>
+          <div class="qr-saved-info">
+            <h3 class="qr-saved-name" title="${escapeHtml(qr.name)}">${escapeHtml(qr.name)}</h3>
+            <div class="qr-saved-date">${formattedDate}</div>
+          </div>
+        </div>
+        <div class="qr-saved-actions">
+          <button class="btn btn-primary btn-sm btn-load-qr" data-id="${qr.id}">
+            <i class="fa-solid fa-folder-open"></i> Cargar
+          </button>
+          <div class="qr-saved-actions-icons">
+            <button class="btn-icon btn-copy-editor" title="Copiar enlace de editor">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button class="btn-icon btn-copy-embed" title="Copiar enlace directo">
+              <i class="fa-solid fa-share-nodes"></i>
+            </button>
+            <button class="btn-icon btn-delete" title="Eliminar QR">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      `;
+      
+      card.querySelector('.btn-load-qr').addEventListener('click', () => loadQrIntoEditor(qr.id, qr.config));
+      
+      card.querySelector('.btn-copy-editor').addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(editorUrl)
+          .then(() => showToast("¡Enlace del editor copiado!"))
+          .catch(() => showToast("Error al copiar enlace", true));
+      });
+      
+      card.querySelector('.btn-copy-embed').addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(embedUrl)
+          .then(() => showToast("¡Enlace directo copiado!"))
+          .catch(() => showToast("Error al copiar enlace", true));
+      });
+      
+      card.querySelector('.btn-delete').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteSavedQr(qr.id, qr.name);
+      });
+      
+      grid.appendChild(card);
+    });
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = `
+      <div class="empty-state" style="border-color: var(--accent-danger);">
+        <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-danger);"></i>
+        <p>Error al cargar los códigos QR guardados.</p>
+        <span>Asegúrate de que el servidor y la base de datos estén funcionando correctamente.</span>
+      </div>
+    `;
+  }
+}
+
+function loadQrIntoEditor(id, config) {
+  try {
+    showToast("Cargando código QR en el editor...");
+    const parsedConfig = typeof config === 'string' ? JSON.parse(config) : config;
+    
+    Object.assign(qrState, parsedConfig);
+    
+    const host = window.location.origin;
+    const editorInput = document.getElementById('share-url-editor');
+    const embedInput = document.getElementById('share-url-embed');
+    if (editorInput) editorInput.value = `${host}/e/${id}`;
+    if (embedInput) embedInput.value = `${host}/q/${id}`;
+    
+    syncUiFromState();
+    renderQr();
+    
+    document.querySelector('.config-section').scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    console.error(err);
+    showToast("Error al cargar la configuración", true);
+  }
+}
+
+async function deleteSavedQr(id, name) {
+  if (!confirm(`¿Estás seguro de que deseas eliminar el código QR "${name}"?`)) {
+    return;
+  }
+  
+  showToast("Eliminando código QR...");
+  try {
+    const response = await fetch(`/api/config/${id}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) throw new Error('Error al eliminar');
+    
+    showToast("¡Código QR eliminado con éxito!");
+    await loadSavedQrs();
+  } catch (err) {
+    console.error(err);
+    showToast("Error al eliminar el código QR", true);
   }
 }
 
@@ -1045,5 +1253,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     syncUiFromState();
     bindDomEvents();
     renderQr();
+    
+    // Carga los QRs guardados al iniciar la app
+    loadSavedQrs();
   }
 });
