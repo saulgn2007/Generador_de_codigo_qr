@@ -189,7 +189,7 @@ function buildQrConfig() {
   let rawData = "https://google.com";
   const type = qrState.dataType;
   
-  if (type === 'url') {
+  if (type === 'url' || type === 'linktree') {
     rawData = qrState.inputUrl || "https://google.com";
     if (rawData && !/^https?:\/\//i.test(rawData) && !/^mailto:/i.test(rawData) && !/^tel:/i.test(rawData)) {
       rawData = 'https://' + rawData;
@@ -467,7 +467,7 @@ function setLabelText(id, text) {
 }
 
 function showContentFields(type) {
-  const fields = ['url', 'text', 'email', 'phone', 'wifi'];
+  const fields = ['url', 'text', 'email', 'phone', 'wifi', 'linktree'];
   fields.forEach(f => {
     const el = document.getElementById(`field-${f}`);
     if (el) {
@@ -478,6 +478,20 @@ function showContentFields(type) {
       }
     }
   });
+
+  // Toggle preview mode
+  const qrContainer = document.getElementById('qr-preview-container');
+  const ltContainer = document.getElementById('lt-phone-container');
+  if (qrContainer && ltContainer) {
+    if (type === 'linktree') {
+      qrContainer.classList.add('hidden');
+      ltContainer.classList.remove('hidden');
+      renderLivePhonePreview();
+    } else {
+      qrContainer.classList.remove('hidden');
+      ltContainer.classList.add('hidden');
+    }
+  }
 }
 
 function updateActiveCardsInGrid(gridId, activeVal, dataAttr = 'data-value') {
@@ -561,6 +575,7 @@ function bindDomEvents() {
   bindElementEvent('qr-data-type', 'change', (e) => {
     qrState.dataType = e.target.value;
     showContentFields(qrState.dataType);
+    updateSaveButtonForLinktree();
     stateChanged();
   });
   
@@ -1256,5 +1271,1017 @@ window.addEventListener('DOMContentLoaded', async () => {
     
     // Carga los QRs guardados al iniciar la app
     loadSavedQrs();
+    
+    // Inicializar Linktree editor
+    initLinktreeEditor();
+    loadSavedLinktrees();
+    updateSaveButtonForLinktree();
   }
 });
+
+// ==========================================
+// Linktree Editor System
+// ==========================================
+
+const linktreeState = {
+  editingId: null,
+  profile: {
+    displayName: '',
+    bio: '',
+    avatar: 'preset:user'
+  },
+  links: [],
+  theme: {
+    type: 'preset', // 'preset', 'image', or 'color'
+    presetName: 'aurora',
+    customImage: null,
+    customBgMediaType: 'image', // 'image' or 'video'
+    customBgSize: 'cover',
+    customBgBlur: 0,
+    customColorBg: '#1a1a1a',
+    customColorCard: '#333333',
+    customColorText: '#ffffff'
+  }
+};
+
+// ==========================================
+// Image Compression Utils
+// ==========================================
+function compressImage(file, maxWidth, maxHeight, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = event => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.floor(width * ratio);
+          height = Math.floor(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', quality));
+      };
+      img.onerror = err => reject(err);
+    };
+    reader.onerror = err => reject(err);
+  });
+}
+
+const LT_ICON_OPTIONS = [
+  { icon: 'fa-solid fa-globe', label: 'Web' },
+  { icon: 'fa-solid fa-link', label: 'Link' },
+  { icon: 'fa-brands fa-instagram', label: 'IG' },
+  { icon: 'fa-brands fa-tiktok', label: 'TT' },
+  { icon: 'fa-brands fa-youtube', label: 'YT' },
+  { icon: 'fa-brands fa-x-twitter', label: 'X' },
+  { icon: 'fa-brands fa-facebook', label: 'FB' },
+  { icon: 'fa-brands fa-linkedin', label: 'LI' },
+  { icon: 'fa-brands fa-github', label: 'GH' },
+  { icon: 'fa-brands fa-whatsapp', label: 'WA' },
+  { icon: 'fa-brands fa-spotify', label: 'SP' },
+  { icon: 'fa-brands fa-twitch', label: 'TW' },
+  { icon: 'fa-solid fa-envelope', label: 'Mail' },
+  { icon: 'fa-solid fa-shop', label: 'Shop' },
+  { icon: 'fa-solid fa-file', label: 'File' },
+];
+
+function generateLinkId() {
+  return 'l' + Math.random().toString(36).substr(2, 6);
+}
+
+function initLinktreeEditor() {
+  // Avatar presets
+  const avatarGrid = document.getElementById('lt-avatar-presets');
+  if (avatarGrid) {
+    avatarGrid.querySelectorAll('.lt-avatar-card').forEach(card => {
+      card.addEventListener('click', () => {
+        avatarGrid.querySelectorAll('.lt-avatar-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        linktreeState.profile.avatar = card.getAttribute('data-avatar');
+        renderLivePhonePreview();
+      });
+    });
+  }
+
+  // Profile inputs
+  bindElementEvent('lt-display-name', 'input', (e) => {
+    linktreeState.profile.displayName = e.target.value;
+    renderLivePhonePreview();
+  });
+  bindElementEvent('lt-bio', 'input', (e) => {
+    linktreeState.profile.bio = e.target.value;
+    renderLivePhonePreview();
+  });
+
+  // Avatar Upload
+  const avatarFileInput = document.getElementById('lt-avatar-file-input');
+  if (avatarFileInput) {
+    avatarFileInput.addEventListener('change', async (e) => {
+      if (e.target.files && e.target.files[0]) {
+        try {
+          const base64 = await compressImage(e.target.files[0], 256, 256, 0.9);
+          linktreeState.profile.avatar = base64;
+          document.getElementById('lt-avatar-preview-img').src = base64;
+          document.getElementById('lt-avatar-preview-container').classList.remove('hidden');
+          document.querySelector('#lt-avatar-dropzone .dropzone-prompt').classList.add('hidden');
+          
+          const avatarGrid = document.getElementById('lt-avatar-presets');
+          if (avatarGrid) {
+            avatarGrid.querySelectorAll('.lt-avatar-card').forEach(c => c.classList.remove('active'));
+          }
+          renderLivePhonePreview();
+        } catch (err) {
+          showToast('Error procesando logo de avatar', true);
+        }
+      }
+    });
+  }
+
+  const btnRemoveAvatar = document.getElementById('btn-remove-lt-avatar');
+  if (btnRemoveAvatar) {
+    btnRemoveAvatar.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (avatarFileInput) avatarFileInput.value = '';
+      document.getElementById('lt-avatar-preview-container').classList.add('hidden');
+      document.querySelector('#lt-avatar-dropzone .dropzone-prompt').classList.remove('hidden');
+      
+      const avatarGrid = document.getElementById('lt-avatar-presets');
+      if (avatarGrid) {
+        const firstBtn = avatarGrid.querySelector('.lt-avatar-card');
+        if (firstBtn) {
+          firstBtn.classList.add('active');
+          linktreeState.profile.avatar = firstBtn.getAttribute('data-avatar');
+        }
+      }
+      renderLivePhonePreview();
+    });
+  }
+
+  // Add link button
+  bindElementEvent('btn-add-link', 'click', () => {
+    addLinktreeLink();
+  });
+
+  // Theme picker
+  const themePicker = document.getElementById('lt-theme-picker');
+  if (themePicker) {
+    themePicker.querySelectorAll('.lt-theme-card').forEach(card => {
+      card.addEventListener('click', () => {
+        themePicker.querySelectorAll('.lt-theme-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        linktreeState.theme.type = 'preset';
+        linktreeState.theme.presetName = card.getAttribute('data-theme');
+        renderLivePhonePreview();
+      });
+    });
+  }
+
+  // Background toggles
+  const bgPresetBtn = document.getElementById('lt-bg-preset-btn');
+  const bgImageBtn = document.getElementById('lt-bg-image-btn');
+  const bgColorBtn = document.getElementById('lt-bg-color-btn');
+  const presetContainer = document.getElementById('lt-bg-preset-container');
+  const imageContainer = document.getElementById('lt-bg-image-container');
+  const colorContainer = document.getElementById('lt-bg-color-container');
+
+  function updateThemeTabs(type) {
+    [bgPresetBtn, bgImageBtn, bgColorBtn].forEach(b => b && b.classList.remove('active'));
+    [presetContainer, imageContainer, colorContainer].forEach(c => c && c.classList.add('hidden'));
+    
+    if (type === 'preset' && bgPresetBtn) {
+      bgPresetBtn.classList.add('active');
+      presetContainer.classList.remove('hidden');
+    } else if (type === 'image' && bgImageBtn) {
+      bgImageBtn.classList.add('active');
+      imageContainer.classList.remove('hidden');
+    } else if (type === 'color' && bgColorBtn) {
+      bgColorBtn.classList.add('active');
+      colorContainer.classList.remove('hidden');
+    }
+  }
+
+  if (bgPresetBtn) {
+    bgPresetBtn.addEventListener('click', () => {
+      updateThemeTabs('preset');
+      linktreeState.theme.type = 'preset';
+      renderLivePhonePreview();
+    });
+    bgImageBtn.addEventListener('click', () => {
+      updateThemeTabs('image');
+      linktreeState.theme.type = 'image';
+      renderLivePhonePreview();
+    });
+    bgColorBtn.addEventListener('click', () => {
+      updateThemeTabs('color');
+      linktreeState.theme.type = 'color';
+      renderLivePhonePreview();
+    });
+  }
+
+  // Background Dropzone
+  const bgFileInput = document.getElementById('lt-bg-file-input');
+  if (bgFileInput) {
+    bgFileInput.addEventListener('change', async (e) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        try {
+          showToast('Subiendo archivo...');
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) throw new Error('Error al subir');
+          const data = await response.json();
+          
+          linktreeState.theme.customImage = data.url;
+          linktreeState.theme.customBgMediaType = file.type.startsWith('video/') ? 'video' : 'image';
+          
+          const previewContainer = document.getElementById('lt-bg-preview-media');
+          if (linktreeState.theme.customBgMediaType === 'video') {
+            previewContainer.innerHTML = `<video src="${data.url}" autoplay loop muted playsinline style="border-radius: 8px; max-height: 150px; object-fit: cover; width: 100%;"></video>`;
+          } else {
+            previewContainer.innerHTML = `<img src="${data.url}" alt="Vista previa" style="border-radius: 8px; max-height: 150px; object-fit: cover; width: 100%;">`;
+          }
+          
+          document.getElementById('lt-bg-preview-container').classList.remove('hidden');
+          document.querySelector('#lt-bg-dropzone .dropzone-prompt').classList.add('hidden');
+          renderLivePhonePreview();
+          showToast('Fondo subido correctamente');
+        } catch (err) {
+          showToast('Error al procesar el fondo', true);
+        }
+      }
+    });
+  }
+
+  const btnRemoveBg = document.getElementById('btn-remove-lt-bg');
+  if (btnRemoveBg) {
+    btnRemoveBg.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      linktreeState.theme.customImage = null;
+      if (bgFileInput) bgFileInput.value = '';
+      document.getElementById('lt-bg-preview-container').classList.add('hidden');
+      document.querySelector('#lt-bg-dropzone .dropzone-prompt').classList.remove('hidden');
+      document.getElementById('lt-bg-preview-media').innerHTML = '';
+      renderLivePhonePreview();
+    });
+  }
+
+  // Advanced BG Controls
+  const bgSizeSelect = document.getElementById('lt-bg-size');
+  if (bgSizeSelect) {
+    bgSizeSelect.addEventListener('change', (e) => {
+      linktreeState.theme.customBgSize = e.target.value;
+      renderLivePhonePreview();
+    });
+  }
+
+  const bgBlurSlider = document.getElementById('lt-bg-blur');
+  if (bgBlurSlider) {
+    bgBlurSlider.addEventListener('input', (e) => {
+      linktreeState.theme.customBgBlur = parseInt(e.target.value);
+      document.getElementById('lt-bg-blur-val').textContent = e.target.value + 'px';
+      renderLivePhonePreview();
+    });
+  }
+
+  // Custom Colors
+  const colorBg = document.getElementById('lt-color-bg');
+  const colorCard = document.getElementById('lt-color-card');
+  const colorText = document.getElementById('lt-color-text');
+
+  if (colorBg) {
+    colorBg.addEventListener('input', (e) => {
+      linktreeState.theme.customColorBg = e.target.value;
+      document.getElementById('lt-color-bg-label').textContent = e.target.value;
+      renderLivePhonePreview();
+    });
+    colorCard.addEventListener('input', (e) => {
+      linktreeState.theme.customColorCard = e.target.value;
+      document.getElementById('lt-color-card-label').textContent = e.target.value;
+      renderLivePhonePreview();
+    });
+    colorText.addEventListener('input', (e) => {
+      linktreeState.theme.customColorText = e.target.value;
+      document.getElementById('lt-color-text-label').textContent = e.target.value;
+      renderLivePhonePreview();
+    });
+  }
+
+  // Refresh linktrees
+  bindElementEvent('btn-refresh-linktrees', 'click', () => loadSavedLinktrees());
+
+  // Linktree URL box logic
+  const copyBtn = document.getElementById('btn-copy-lt-url');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      const input = document.getElementById('lt-generated-url-input');
+      if (input && input.value) {
+        navigator.clipboard.writeText(input.value)
+          .then(() => showToast('¡Enlace copiado al portapapeles!'))
+          .catch(err => console.error('Error al copiar: ', err));
+      }
+    });
+  }
+
+  // Add initial empty link
+  if (linktreeState.links.length === 0) {
+    addLinktreeLink('', '', 'fa-solid fa-globe', false);
+  }
+}
+
+function addLinktreeLink(title = '', url = '', icon = 'fa-solid fa-globe', animate = true) {
+  const link = { id: generateLinkId(), title, url, iconType: 'preset', icon, customIcon: null };
+  linktreeState.links.push(link);
+  renderLinktreeLinks();
+  renderLivePhonePreview();
+}
+
+function removeLinktreeLink(linkId) {
+  linktreeState.links = linktreeState.links.filter(l => l.id !== linkId);
+  renderLinktreeLinks();
+  renderLivePhonePreview();
+}
+
+function renderLinktreeLinks() {
+  const list = document.getElementById('lt-links-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  linktreeState.links.forEach((link, index) => {
+    const item = document.createElement('div');
+    item.className = 'lt-link-item';
+    item.setAttribute('draggable', 'true');
+    item.setAttribute('data-link-id', link.id);
+    item.setAttribute('data-index', index);
+
+    // Icon picker buttons
+    const iconBtns = LT_ICON_OPTIONS.map(opt =>
+      `<button class="lt-link-icon-btn ${link.icon === opt.icon ? 'active' : ''}" data-icon="${opt.icon}" title="${opt.label}"><i class="${opt.icon}"></i></button>`
+    ).join('');
+
+    item.innerHTML = `
+      <div class="lt-drag-handle" title="Arrastrar para reordenar">
+        <i class="fa-solid fa-grip-vertical"></i>
+      </div>
+      <div class="lt-link-fields">
+        <input type="text" class="lt-link-title" placeholder="Título del enlace" value="${escapeHtml(link.title)}">
+        <input type="url" class="lt-link-url" placeholder="https://..." value="${escapeHtml(link.url)}">
+        <div class="lt-link-icon-picker">${iconBtns}</div>
+        <div class="lt-link-custom-icon">
+          <label class="lt-custom-icon-btn">
+            <i class="fa-solid fa-upload"></i> Subir Logo Propio
+            <input type="file" class="lt-link-file-input hidden" accept="image/png, image/jpeg, image/svg+xml">
+          </label>
+          <div class="lt-custom-icon-preview-container ${link.iconType === 'custom' && link.customIcon ? '' : 'hidden'}">
+            <img class="lt-custom-icon-preview" src="${link.customIcon || ''}" alt="Custom Icon">
+            <button class="lt-link-remove-custom-icon" style="background:none;border:none;color:var(--accent-danger);cursor:pointer;font-size:0.8rem;" title="Quitar logo"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+      </div>
+      <button class="lt-link-remove" title="Eliminar enlace">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    `;
+
+    // Bind inputs
+    item.querySelector('.lt-link-title').addEventListener('input', (e) => {
+      link.title = e.target.value;
+      renderLivePhonePreview();
+    });
+    item.querySelector('.lt-link-url').addEventListener('input', (e) => {
+      link.url = e.target.value;
+    });
+
+    // Custom Icon Upload
+    item.querySelector('.lt-link-file-input').addEventListener('change', async (e) => {
+      if (e.target.files && e.target.files[0]) {
+        try {
+          const base64 = await compressImage(e.target.files[0], 128, 128, 0.9);
+          link.customIcon = base64;
+          link.iconType = 'custom';
+          
+          item.querySelectorAll('.lt-link-icon-btn').forEach(b => b.classList.remove('active'));
+          item.querySelector('.lt-custom-icon-preview').src = base64;
+          item.querySelector('.lt-custom-icon-preview-container').classList.remove('hidden');
+          renderLivePhonePreview();
+        } catch(err) {
+          showToast('Error al subir icono', true);
+        }
+      }
+    });
+
+    item.querySelector('.lt-link-remove-custom-icon').addEventListener('click', (e) => {
+      e.preventDefault();
+      link.customIcon = null;
+      link.iconType = 'preset';
+      item.querySelector('.lt-custom-icon-preview-container').classList.add('hidden');
+      
+      const currentIconBtn = Array.from(item.querySelectorAll('.lt-link-icon-btn')).find(b => b.getAttribute('data-icon') === link.icon);
+      if(currentIconBtn) currentIconBtn.classList.add('active');
+      renderLivePhonePreview();
+    });
+
+    // Icon selection
+    item.querySelectorAll('.lt-link-icon-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        link.icon = btn.getAttribute('data-icon');
+        link.iconType = 'preset';
+        item.querySelectorAll('.lt-link-icon-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        item.querySelector('.lt-custom-icon-preview-container').classList.add('hidden');
+        renderLivePhonePreview();
+      });
+    });
+
+    // Remove button
+    item.querySelector('.lt-link-remove').addEventListener('click', () => {
+      removeLinktreeLink(link.id);
+    });
+
+    // Drag & Drop
+    item.addEventListener('dragstart', handleLtDragStart);
+    item.addEventListener('dragend', handleLtDragEnd);
+    item.addEventListener('dragover', handleLtDragOver);
+    item.addEventListener('dragenter', handleLtDragEnter);
+    item.addEventListener('dragleave', handleLtDragLeave);
+    item.addEventListener('drop', handleLtDrop);
+
+    list.appendChild(item);
+  });
+}
+
+// Drag & Drop handlers
+let ltDraggedIndex = null;
+
+function handleLtDragStart(e) {
+  ltDraggedIndex = parseInt(this.getAttribute('data-index'));
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', ltDraggedIndex);
+}
+
+function handleLtDragEnd(e) {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.lt-link-item').forEach(item => {
+    item.classList.remove('drag-over');
+  });
+}
+
+function handleLtDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleLtDragEnter(e) {
+  e.preventDefault();
+  this.classList.add('drag-over');
+}
+
+function handleLtDragLeave(e) {
+  this.classList.remove('drag-over');
+}
+
+function handleLtDrop(e) {
+  e.preventDefault();
+  this.classList.remove('drag-over');
+  const targetIndex = parseInt(this.getAttribute('data-index'));
+
+  if (ltDraggedIndex !== null && ltDraggedIndex !== targetIndex) {
+    const [movedLink] = linktreeState.links.splice(ltDraggedIndex, 1);
+    linktreeState.links.splice(targetIndex, 0, movedLink);
+    renderLinktreeLinks();
+    renderLivePhonePreview();
+  }
+  ltDraggedIndex = null;
+}
+
+// Update Save button appearance when linktree mode is active
+function updateSaveButtonForLinktree() {
+  const saveBtn = document.getElementById('btn-generate-links');
+  if (!saveBtn) return;
+
+  if (qrState.dataType === 'linktree') {
+    saveBtn.innerHTML = '<i class="fa-solid fa-tree"></i> Guardar Linktree & Generar QR';
+    saveBtn.classList.add('btn-save-linktree');
+  } else {
+    saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
+    saveBtn.classList.remove('btn-save-linktree');
+  }
+}
+
+// Live Phone Preview System
+function renderLivePhonePreview() {
+  if (qrState.dataType !== 'linktree') return;
+
+  const screen = document.getElementById('lt-phone-screen');
+  if (!screen) return;
+
+  const lt = linktreeState;
+  
+  // Avatar
+  let avatarIcon = 'fa-solid fa-user';
+  if (lt.profile.avatar && lt.profile.avatar.startsWith('preset:')) {
+    const presetMap = {
+      'preset:user': 'fa-solid fa-user',
+      'preset:star': 'fa-solid fa-star',
+      'preset:heart': 'fa-solid fa-heart',
+      'preset:code': 'fa-solid fa-code',
+      'preset:music': 'fa-solid fa-music',
+      'preset:camera': 'fa-solid fa-camera',
+      'preset:rocket': 'fa-solid fa-rocket',
+      'preset:bolt': 'fa-solid fa-bolt',
+    };
+    avatarIcon = presetMap[lt.profile.avatar] || 'fa-solid fa-user';
+  }
+
+  const avatarHtml = (lt.profile.avatar && !lt.profile.avatar.startsWith('preset:'))
+    ? `<img src="${lt.profile.avatar}" class="lt-live-avatar" alt="Avatar">`
+    : `<div class="lt-live-avatar"><i class="${avatarIcon}"></i></div>`;
+
+  // Links
+  const linksHtml = lt.links.map(link => {
+    let iconHtml = '';
+    if (link.iconType === 'custom' && link.customIcon) {
+      iconHtml = `<div class="lt-live-btn-icon"><img src="${link.customIcon}" alt="Icon"></div>`;
+    } else {
+      iconHtml = `<div class="lt-live-btn-icon"><i class="${link.icon || 'fa-solid fa-globe'}"></i></div>`;
+    }
+
+    return `
+      <div class="lt-live-btn">
+        ${iconHtml}
+        <span>${escapeHtml(link.title || 'Enlace Nuevo')}</span>
+      </div>
+    `;
+  }).join('');
+
+  // Background Theme
+  let bgHtml = '';
+  let customStyles = '';
+  
+  if (lt.theme.type === 'preset') {
+    bgHtml = `<div class="lt-live-bg lt-theme-${lt.theme.presetName || 'aurora'}"></div>`;
+  } else if (lt.theme.type === 'image' && lt.theme.customImage) {
+    const bgSize = lt.theme.customBgSize || 'cover';
+    const bgBlur = lt.theme.customBgBlur || 0;
+    
+    if (lt.theme.customBgMediaType === 'video') {
+      bgHtml = `
+        <video class="lt-live-bg lt-live-video" src="${lt.theme.customImage}" autoplay loop muted playsinline style="object-fit: ${bgSize}; filter: blur(${bgBlur}px); width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></video>
+        <div class="lt-live-overlay"></div>
+      `;
+    } else {
+      bgHtml = `
+        <div class="lt-live-bg" style="background-image: url('${lt.theme.customImage}'); background-size: ${bgSize}; background-position: center; filter: blur(${bgBlur}px); position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+        <div class="lt-live-overlay"></div>
+      `;
+    }
+  } else if (lt.theme.type === 'color') {
+    bgHtml = `<div class="lt-live-bg" style="background: ${lt.theme.customColorBg || '#1a1a1a'}"></div>`;
+    customStyles = `
+      <style>
+        #lt-phone-screen .lt-live-name, #lt-phone-screen .lt-live-bio { color: ${lt.theme.customColorText || '#ffffff'}; }
+        #lt-phone-screen .lt-live-avatar { border-color: ${lt.theme.customColorText || '#ffffff'}; }
+        #lt-phone-screen .lt-live-btn { 
+          background: ${lt.theme.customColorCard || '#333333'}; 
+          color: ${lt.theme.customColorText || '#ffffff'};
+          border-color: rgba(255,255,255,0.1);
+        }
+      </style>
+    `;
+  } else {
+    bgHtml = `<div class="lt-live-bg lt-theme-aurora"></div>`; // fallback
+  }
+
+  screen.innerHTML = `
+    ${bgHtml}
+    ${customStyles}
+    <div class="lt-live-content">
+      ${avatarHtml}
+      <div class="lt-live-name">${escapeHtml(lt.profile.displayName || 'Tu Nombre')}</div>
+      <div class="lt-live-bio">${escapeHtml(lt.profile.bio || 'Una breve descripción sobre ti')}</div>
+      <div class="lt-live-links">
+        ${linksHtml}
+      </div>
+    </div>
+  `;
+
+  // Update Editing Badge
+  let badgeEl = document.getElementById('lt-editing-badge');
+  if (linktreeState.editingId) {
+    if (!badgeEl) {
+      badgeEl = document.createElement('div');
+      badgeEl.id = 'lt-editing-badge';
+      badgeEl.className = 'lt-editing-badge';
+      const wrapper = document.getElementById('preview-switcher');
+      wrapper.parentElement.insertBefore(badgeEl, wrapper);
+    }
+    badgeEl.innerHTML = `<i class="fa-solid fa-pen"></i> Editando Linktree existente <button id="btn-cancel-lt-edit" title="Cancelar edición">&times;</button>`;
+    document.getElementById('btn-cancel-lt-edit').addEventListener('click', () => {
+      cancelLinktreeEdit();
+    });
+  } else if (badgeEl) {
+    badgeEl.remove();
+  }
+}
+
+function removeLinktreeMiniPreview() {
+  const badge = document.getElementById('lt-editing-badge');
+  if (badge) badge.remove();
+}
+
+// Save Linktree (or update if editing)
+async function saveLinktreeAndGenerateQR(ltName) {
+  // Validate
+  const validLinks = linktreeState.links.filter(l => l.title && l.url);
+  if (validLinks.length === 0) {
+    showToast('Agrega al menos un enlace con título y URL', true);
+    return;
+  }
+  if (!linktreeState.profile.displayName) {
+    showToast('Ingresa un nombre para mostrar', true);
+    return;
+  }
+
+  const payload = {
+    name: ltName,
+    profile: linktreeState.profile,
+    links: validLinks,
+    theme: linktreeState.theme
+  };
+
+  try {
+    let response;
+    if (linktreeState.editingId) {
+      showToast('Actualizando Linktree...');
+      response = await fetch(`/api/linktree/${linktreeState.editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      showToast('Guardando Linktree y generando QR...');
+      response = await fetch('/api/linktree/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (!response.ok) throw new Error('Error al guardar');
+    const data = await response.json();
+
+    // Set QR to point to the linktree URL
+    qrState.inputUrl = data.url;
+    stateChanged();
+
+    showToast(linktreeState.editingId ? '¡Linktree actualizado con éxito!' : '¡Linktree guardado y QR generado!');
+    linktreeState.editingId = data.id;
+    
+    const generatedUrl = window.location.origin + '/lt/' + data.id;
+    const urlBox = document.getElementById('lt-generated-url-box');
+    const urlInput = document.getElementById('lt-generated-url-input');
+    const urlOpen = document.getElementById('btn-open-lt-url');
+    if (urlBox && urlInput && urlOpen) {
+      urlBox.classList.remove('hidden');
+      urlInput.value = generatedUrl;
+      urlOpen.href = generatedUrl;
+    }
+
+    await loadSavedLinktrees();
+    renderLivePhonePreview();
+  } catch (error) {
+    console.error(error);
+    showToast('Error al guardar el Linktree', true);
+  }
+}
+
+// Override the save handler when in linktree mode
+const _originalGenerateShareLinksWithName = generateShareLinksWithName;
+generateShareLinksWithName = async function(name) {
+  if (qrState.dataType === 'linktree') {
+    await saveLinktreeAndGenerateQR(name);
+  } else {
+    await _originalGenerateShareLinksWithName(name);
+  }
+};
+
+// Load saved Linktrees into the dashboard
+async function loadSavedLinktrees() {
+  const grid = document.getElementById('saved-linktrees-grid');
+  if (!grid) return;
+
+  try {
+    const response = await fetch('/api/linktrees');
+    if (!response.ok) throw new Error('Error');
+    const linktrees = await response.json();
+    grid.innerHTML = '';
+
+    if (linktrees.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <i class="fa-solid fa-tree"></i>
+          <p>No tienes Linktrees guardados aún.</p>
+          <span>Selecciona "Linktree" como tipo de contenido para crear uno.</span>
+        </div>
+      `;
+      return;
+    }
+
+    linktrees.forEach(lt => {
+      const card = document.createElement('div');
+      card.className = 'qr-saved-card';
+
+      const formattedDate = new Date(lt.created_at).toLocaleDateString('es-ES', {
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+
+      const host = window.location.origin;
+      const ltUrl = `${host}/lt/${lt.id}`;
+      const linkCount = (lt.links || []).length;
+
+      card.innerHTML = `
+        <div class="qr-saved-card-header">
+          <div class="qr-saved-icon" style="background: linear-gradient(135deg, #10b981, #06b6d4);">
+            <i class="fa-solid fa-tree"></i>
+          </div>
+          <div class="qr-saved-info">
+            <h3 class="qr-saved-name" title="${escapeHtml(lt.name)}">${escapeHtml(lt.name)}</h3>
+            <div class="qr-saved-date">${formattedDate} · ${linkCount} enlaces</div>
+          </div>
+        </div>
+        <div class="qr-saved-actions">
+          <button class="btn btn-primary btn-sm btn-edit-lt" data-id="${lt.id}" style="background: linear-gradient(135deg, #10b981, #06b6d4);">
+            <i class="fa-solid fa-pen"></i> Editar
+          </button>
+          <div class="qr-saved-actions-icons">
+            <button class="btn-icon btn-open-lt" title="Abrir página pública">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </button>
+            <button class="btn-icon btn-copy-lt" title="Copiar enlace">
+              <i class="fa-solid fa-copy"></i>
+            </button>
+            <button class="btn-icon btn-delete-lt" title="Eliminar Linktree">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      `;
+
+      card.querySelector('.btn-edit-lt').addEventListener('click', () => loadLinktreeIntoEditor(lt));
+      card.querySelector('.btn-open-lt').addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.open(ltUrl, '_blank');
+      });
+      card.querySelector('.btn-copy-lt').addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(ltUrl)
+          .then(() => showToast('¡Enlace del Linktree copiado!'))
+          .catch(() => showToast('Error al copiar', true));
+      });
+      card.querySelector('.btn-delete-lt').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteLinktree(lt.id, lt.name);
+      });
+
+      grid.appendChild(card);
+    });
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = `
+      <div class="empty-state" style="border-color: var(--accent-danger);">
+        <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-danger);"></i>
+        <p>Error al cargar los Linktrees.</p>
+      </div>
+    `;
+  }
+}
+
+function loadLinktreeIntoEditor(lt) {
+  // Switch to linktree mode
+  qrState.dataType = 'linktree';
+  const typeSelect = document.getElementById('qr-data-type');
+  if (typeSelect) typeSelect.value = 'linktree';
+  showContentFields('linktree');
+  updateSaveButtonForLinktree();
+
+  // Load data into state
+  linktreeState.editingId = lt.id;
+  linktreeState.profile = { ...lt.profile };
+  linktreeState.links = (lt.links || []).map(l => ({ ...l }));
+  
+  // Backwards compatibility if theme is string
+  if (typeof lt.theme === 'string') {
+    linktreeState.theme = { type: 'preset', presetName: lt.theme, customImage: null, customBgMediaType: 'image', customBgSize: 'cover', customBgBlur: 0, customColorBg: '#1a1a1a', customColorCard: '#333333', customColorText: '#ffffff' };
+  } else {
+    linktreeState.theme = { 
+      type: lt.theme?.type || 'preset', 
+      presetName: lt.theme?.presetName || 'aurora', 
+      customImage: lt.theme?.customImage || null,
+      customBgMediaType: lt.theme?.customBgMediaType || 'image',
+      customBgSize: lt.theme?.customBgSize || 'cover',
+      customBgBlur: lt.theme?.customBgBlur || 0,
+      customColorBg: lt.theme?.customColorBg || '#1a1a1a',
+      customColorCard: lt.theme?.customColorCard || '#333333',
+      customColorText: lt.theme?.customColorText || '#ffffff'
+    };
+  }
+
+  // Sync UI
+  setInputVal('lt-display-name', linktreeState.profile.displayName || '');
+  setInputVal('lt-bio', linktreeState.profile.bio || '');
+
+  // Avatar
+  const avatarGrid = document.getElementById('lt-avatar-presets');
+  if (avatarGrid) {
+    avatarGrid.querySelectorAll('.lt-avatar-card').forEach(c => c.classList.remove('active'));
+    
+    if (linktreeState.profile.avatar && linktreeState.profile.avatar.startsWith('preset:')) {
+      const card = avatarGrid.querySelector(`[data-avatar="${linktreeState.profile.avatar}"]`);
+      if (card) card.classList.add('active');
+      document.getElementById('lt-avatar-preview-container').classList.add('hidden');
+      document.querySelector('#lt-avatar-dropzone .dropzone-prompt').classList.remove('hidden');
+    } else if (linktreeState.profile.avatar) {
+      document.getElementById('lt-avatar-preview-img').src = linktreeState.profile.avatar;
+      document.getElementById('lt-avatar-preview-container').classList.remove('hidden');
+      document.querySelector('#lt-avatar-dropzone .dropzone-prompt').classList.add('hidden');
+    }
+  }
+
+  // Theme UI sync
+  const bgPresetBtn = document.getElementById('lt-bg-preset-btn');
+  const bgImageBtn = document.getElementById('lt-bg-image-btn');
+  const bgColorBtn = document.getElementById('lt-bg-color-btn');
+  const presetContainer = document.getElementById('lt-bg-preset-container');
+  const imageContainer = document.getElementById('lt-bg-image-container');
+  const colorContainer = document.getElementById('lt-bg-color-container');
+
+  [bgPresetBtn, bgImageBtn, bgColorBtn].forEach(b => b && b.classList.remove('active'));
+  [presetContainer, imageContainer, colorContainer].forEach(c => c && c.classList.add('hidden'));
+
+  if (linktreeState.theme.type === 'image') {
+    if (bgImageBtn) bgImageBtn.classList.add('active');
+    if (imageContainer) imageContainer.classList.remove('hidden');
+    
+    if (linktreeState.theme.customImage) {
+      const previewContainer = document.getElementById('lt-bg-preview-media');
+      if (previewContainer) {
+        if (linktreeState.theme.customBgMediaType === 'video') {
+          previewContainer.innerHTML = `<video src="${linktreeState.theme.customImage}" autoplay loop muted playsinline style="border-radius: 8px; max-height: 150px; object-fit: cover; width: 100%;"></video>`;
+        } else {
+          previewContainer.innerHTML = `<img src="${linktreeState.theme.customImage}" alt="Vista previa" style="border-radius: 8px; max-height: 150px; object-fit: cover; width: 100%;">`;
+        }
+      }
+      document.getElementById('lt-bg-preview-container').classList.remove('hidden');
+      document.querySelector('#lt-bg-dropzone .dropzone-prompt').classList.add('hidden');
+    }
+    
+    // Set advanced controls
+    const bgSizeSelect = document.getElementById('lt-bg-size');
+    if (bgSizeSelect) bgSizeSelect.value = linktreeState.theme.customBgSize || 'cover';
+    
+    const bgBlurSlider = document.getElementById('lt-bg-blur');
+    if (bgBlurSlider) {
+      bgBlurSlider.value = linktreeState.theme.customBgBlur || 0;
+      document.getElementById('lt-bg-blur-val').textContent = (linktreeState.theme.customBgBlur || 0) + 'px';
+    }
+    
+  } else if (linktreeState.theme.type === 'color') {
+    if (bgColorBtn) bgColorBtn.classList.add('active');
+    if (colorContainer) colorContainer.classList.remove('hidden');
+    
+    document.getElementById('lt-color-bg').value = linktreeState.theme.customColorBg || '#1a1a1a';
+    document.getElementById('lt-color-bg-label').textContent = linktreeState.theme.customColorBg || '#1a1a1a';
+    document.getElementById('lt-color-card').value = linktreeState.theme.customColorCard || '#333333';
+    document.getElementById('lt-color-card-label').textContent = linktreeState.theme.customColorCard || '#333333';
+    document.getElementById('lt-color-text').value = linktreeState.theme.customColorText || '#ffffff';
+    document.getElementById('lt-color-text-label').textContent = linktreeState.theme.customColorText || '#ffffff';
+  } else {
+    if (bgPresetBtn) bgPresetBtn.classList.add('active');
+    if (presetContainer) presetContainer.classList.remove('hidden');
+    
+    const themePicker = document.getElementById('lt-theme-picker');
+    if (themePicker) {
+      themePicker.querySelectorAll('.lt-theme-card').forEach(c => {
+        c.classList.toggle('active', c.getAttribute('data-theme') === linktreeState.theme.presetName);
+      });
+    }
+  }
+
+  // Render links
+  renderLinktreeLinks();
+
+  // Set QR URL to linktree URL
+  const host = window.location.origin;
+  const ltUrl = `${host}/lt/${lt.id}`;
+  qrState.inputUrl = ltUrl;
+  stateChanged();
+
+  // Show URL box
+  const urlBox = document.getElementById('lt-generated-url-box');
+  const urlInput = document.getElementById('lt-generated-url-input');
+  const urlOpen = document.getElementById('btn-open-lt-url');
+  if (urlBox && urlInput && urlOpen) {
+    urlBox.classList.remove('hidden');
+    urlInput.value = ltUrl;
+    urlOpen.href = ltUrl;
+  }
+
+  renderLivePhonePreview();
+
+  // Scroll to editor
+  document.querySelector('.config-section').scrollIntoView({ behavior: 'smooth' });
+  showToast('Linktree cargado en el editor');
+}
+
+function cancelLinktreeEdit() {
+  linktreeState.editingId = null;
+  linktreeState.profile = { displayName: '', bio: '', avatar: 'preset:user' };
+  linktreeState.links = [{ id: generateLinkId(), title: '', url: '', iconType: 'preset', icon: 'fa-solid fa-globe', customIcon: null }];
+  linktreeState.theme = { type: 'preset', presetName: 'aurora', customImage: null, customBgMediaType: 'image', customBgSize: 'cover', customBgBlur: 0, customColorBg: '#1a1a1a', customColorCard: '#333333', customColorText: '#ffffff' };
+
+  setInputVal('lt-display-name', '');
+  setInputVal('lt-bio', '');
+
+  const avatarGrid = document.getElementById('lt-avatar-presets');
+  if (avatarGrid) {
+    avatarGrid.querySelectorAll('.lt-avatar-card').forEach((c, i) => {
+      c.classList.toggle('active', i === 0);
+    });
+  }
+  document.getElementById('lt-avatar-preview-container').classList.add('hidden');
+  document.querySelector('#lt-avatar-dropzone .dropzone-prompt').classList.remove('hidden');
+
+  const themePicker = document.getElementById('lt-theme-picker');
+  if (themePicker) {
+    themePicker.querySelectorAll('.lt-theme-card').forEach((c, i) => {
+      c.classList.toggle('active', i === 0);
+    });
+  }
+
+  const bgPresetBtn = document.getElementById('lt-bg-preset-btn');
+  if (bgPresetBtn) bgPresetBtn.click(); // resets UI to presets
+
+  document.getElementById('lt-bg-preview-container').classList.add('hidden');
+  document.querySelector('#lt-bg-dropzone .dropzone-prompt').classList.remove('hidden');
+  const previewMedia = document.getElementById('lt-bg-preview-media');
+  if (previewMedia) previewMedia.innerHTML = '';
+  
+  // reset advanced controls
+  const bgSizeSelect = document.getElementById('lt-bg-size');
+  if (bgSizeSelect) bgSizeSelect.value = 'cover';
+  
+  const bgBlurSlider = document.getElementById('lt-bg-blur');
+  if (bgBlurSlider) {
+    bgBlurSlider.value = 0;
+    document.getElementById('lt-bg-blur-val').textContent = '0px';
+  }
+  
+  // reset colors
+  document.getElementById('lt-color-bg').value = '#1a1a1a';
+  document.getElementById('lt-color-bg-label').textContent = '#1a1a1a';
+  document.getElementById('lt-color-card').value = '#333333';
+  document.getElementById('lt-color-card-label').textContent = '#333333';
+  document.getElementById('lt-color-text').value = '#ffffff';
+  document.getElementById('lt-color-text-label').textContent = '#ffffff';
+
+  // Hide URL box
+  const urlBox = document.getElementById('lt-generated-url-box');
+  if (urlBox) urlBox.classList.add('hidden');
+
+  renderLinktreeLinks();
+  renderLivePhonePreview();
+  showToast('Edición cancelada');
+}
+
+async function deleteLinktree(id, name) {
+  if (!confirm(`¿Estás seguro de que deseas eliminar el Linktree "${name}"?`)) return;
+
+  showToast('Eliminando Linktree...');
+  try {
+    const response = await fetch(`/api/linktree/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Error');
+    showToast('¡Linktree eliminado!');
+    if (linktreeState.editingId === id) cancelLinktreeEdit();
+    await loadSavedLinktrees();
+  } catch (err) {
+    console.error(err);
+    showToast('Error al eliminar el Linktree', true);
+  }
+}

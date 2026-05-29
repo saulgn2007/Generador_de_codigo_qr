@@ -9,9 +9,14 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.21.1"
+    "express": "^4.21.1",
+    "multer": "^2.1.1"
   },
-  "keywords": ["qr", "generator", "customizable"],
+  "keywords": [
+    "qr",
+    "generator",
+    "customizable"
+  ],
   "author": "QR Aura Team",
   "license": "MIT"
 }

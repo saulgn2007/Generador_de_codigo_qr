@@ -70,4 +70,59 @@ function deleteLink(id) {
   save(data);
 }
 
-module.exports = { initDb, saveLink, getLink, getAllLinks, deleteLink };
+// ==========================================
+// Linktree CRUD
+// ==========================================
+
+function saveLinktree(name, linktreeData) {
+  const data = load();
+  if (!data.linktrees) data.linktrees = [];
+  let id = generateShortId();
+  while (data.linktrees.find(l => l.id === id) || data.links.find(l => l.id === id)) {
+    id = generateShortId();
+  }
+  data.linktrees.unshift({
+    id,
+    name,
+    ...linktreeData,
+    created_at: new Date().toISOString()
+  });
+  save(data);
+  return id;
+}
+
+function getLinktree(id) {
+  const data = load();
+  if (!data.linktrees) return null;
+  return data.linktrees.find(l => l.id === id) || null;
+}
+
+function getAllLinktrees() {
+  const data = load();
+  return data.linktrees || [];
+}
+
+function updateLinktree(id, linktreeData) {
+  const data = load();
+  if (!data.linktrees) return false;
+  const index = data.linktrees.findIndex(l => l.id === id);
+  if (index === -1) return false;
+  data.linktrees[index] = {
+    ...data.linktrees[index],
+    ...linktreeData,
+    id, // preserve original ID
+    created_at: data.linktrees[index].created_at, // preserve original date
+    updated_at: new Date().toISOString()
+  };
+  save(data);
+  return true;
+}
+
+function deleteLinktree(id) {
+  const data = load();
+  if (!data.linktrees) return;
+  data.linktrees = data.linktrees.filter(l => l.id !== id);
+  save(data);
+}
+
+module.exports = { initDb, saveLink, getLink, getAllLinks, deleteLink, saveLinktree, getLinktree, getAllLinktrees, updateLinktree, deleteLinktree };

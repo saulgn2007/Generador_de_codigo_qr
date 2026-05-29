@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Enlaces personales — creado con QR Aura">
+  <meta name="theme-color" content="#7c3aed">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="QR Aura">
+  <title>Links | QR Aura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background 0.6s ease;
+    }
+
+    /* ===== BACKGROUND LAYER ===== */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      transition: background 0.8s ease;
+    }
+    .bg-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* ===== AURORA THEME ===== */
+    body.theme-aurora .bg-layer {
+      background: linear-gradient(135deg, #1a0533 0%, #0f0a2e 30%, #1b1145 60%, #0d0b2b 100%);
+    }
+    body.theme-aurora .bg-overlay {
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 40%, rgba(120, 50, 255, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 30%, rgba(0, 200, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse 70% 50% at 50% 80%, rgba(180, 50, 255, 0.08) 0%, transparent 60%);
+      animation: auroraShift 12s ease-in-out infinite alternate;
+    }
+    @keyframes auroraShift {
+      0% { opacity: 0.7; transform: scale(1) translateY(0); }
+      50% { opacity: 1; transform: scale(1.05) translateY(-10px); }
+      100% { opacity: 0.8; transform: scale(1) translateY(5px); }
+    }
+    body.theme-aurora { color: #e8e0ff; }
+    body.theme-aurora .profile-name { color: #fff; }
+    body.theme-aurora .profile-bio { color: rgba(210, 195, 255, 0.85); }
+    body.theme-aurora .link-card {
+      background: rgba(120, 80, 220, 0.12);
+      border: 1px solid rgba(160, 120, 255, 0.25);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 4px 30px rgba(100, 50, 200, 0.1), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    body.theme-aurora .link-card:hover {
+      background: rgba(140, 90, 240, 0.2);
+      border-color: rgba(180, 140, 255, 0.5);
+      box-shadow: 0 8px 40px rgba(130, 70, 255, 0.25), 0 0 20px rgba(130, 70, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    body.theme-aurora .link-card .link-icon { color: #a78bfa; }
+    body.theme-aurora .link-card .link-title { color: #f0eaff; }
+    body.theme-aurora .link-card .link-arrow { color: rgba(167, 139, 250, 0.5); }
+    body.theme-aurora .link-card:hover .link-arrow { color: #c4b5fd; }
+    body.theme-aurora .avatar-circle {
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      box-shadow: 0 0 40px rgba(124, 58, 237, 0.4), 0 0 80px rgba(6, 182, 212, 0.15);
+    }
+    body.theme-aurora .footer-text { color: rgba(180, 160, 230, 0.5); }
+    body.theme-aurora .footer-text a { color: rgba(200, 180, 255, 0.7); }
+
+    /* ===== SUNSET THEME ===== */
+    body.theme-sunset .bg-layer {
+      background: linear-gradient(160deg, #1a0a0a 0%, #2d1118 25%, #3d1a20 50%, #2a1510 75%, #1a0d08 100%);
+    }
+    body.theme-sunset .bg-overlay {
+      background:
+        radial-gradient(ellipse 70% 50% at 30% 20%, rgba(255, 100, 80, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 70% 60%, rgba(255, 180, 50, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 80% 40% at 50% 90%, rgba(255, 80, 120, 0.06) 0%, transparent 60%);
+      animation: sunsetPulse 10s ease-in-out infinite alternate;
+    }
+    @keyframes sunsetPulse {
+      0% { opacity: 0.8; }
+      100% { opacity: 1; }
+    }
+    body.theme-sunset { color: #fde8e0; }
+    body.theme-sunset .profile-name { color: #fff5f0; }
+    body.theme-sunset .profile-bio { color: rgba(255, 220, 200, 0.8); }
+    body.theme-sunset .link-card {
+      background: rgba(255, 180, 140, 0.08);
+      border: 1px solid rgba(255, 160, 120, 0.2);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 4px 25px rgba(200, 80, 50, 0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    body.theme-sunset .link-card:hover {
+      background: rgba(255, 160, 120, 0.15);
+      border-color: rgba(255, 180, 130, 0.45);
+      box-shadow: 0 8px 40px rgba(255, 120, 80, 0.2), 0 0 20px rgba(255, 150, 100, 0.1), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    body.theme-sunset .link-card .link-icon { color: #fb923c; }
+    body.theme-sunset .link-card .link-title { color: #fff5f0; }
+    body.theme-sunset .link-card .link-arrow { color: rgba(251, 146, 60, 0.4); }
+    body.theme-sunset .link-card:hover .link-arrow { color: #fdba74; }
+    body.theme-sunset .avatar-circle {
+      background: linear-gradient(135deg, #f43f5e, #f59e0b);
+      box-shadow: 0 0 40px rgba(244, 63, 94, 0.35), 0 0 80px rgba(245, 158, 11, 0.15);
+    }
+    body.theme-sunset .footer-text { color: rgba(200, 150, 130, 0.45); }
+    body.theme-sunset .footer-text a { color: rgba(255, 180, 150, 0.65); }
+
+    /* ===== OCEAN THEME ===== */
+    body.theme-ocean .bg-layer {
+      background: linear-gradient(160deg, #021a22 0%, #042f3d 30%, #063a4a 50%, #032a38 75%, #011820 100%);
+    }
+    body.theme-ocean .bg-overlay {
+      background:
+        radial-gradient(ellipse 70% 50% at 25% 35%, rgba(0, 180, 200, 0.1) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 75% 50%, rgba(0, 120, 200, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 80% 60% at 50% 85%, rgba(0, 200, 180, 0.06) 0%, transparent 60%);
+      animation: oceanWave 14s ease-in-out infinite alternate;
+    }
+    @keyframes oceanWave {
+      0% { transform: translateX(0) scale(1); opacity: 0.7; }
+      50% { transform: translateX(-10px) scale(1.03); opacity: 1; }
+      100% { transform: translateX(5px) scale(1); opacity: 0.8; }
+    }
+    body.theme-ocean { color: #d0f0f8; }
+    body.theme-ocean .profile-name { color: #f0fdff; }
+    body.theme-ocean .profile-bio { color: rgba(180, 230, 245, 0.8); }
+    body.theme-ocean .link-card {
+      background: rgba(0, 180, 200, 0.08);
+      border: 1px solid rgba(0, 200, 220, 0.2);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 4px 25px rgba(0, 150, 180, 0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    body.theme-ocean .link-card:hover {
+      background: rgba(0, 200, 220, 0.15);
+      border-color: rgba(0, 220, 240, 0.4);
+      box-shadow: 0 8px 40px rgba(0, 200, 220, 0.2), 0 0 20px rgba(0, 200, 220, 0.12), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    body.theme-ocean .link-card .link-icon { color: #22d3ee; }
+    body.theme-ocean .link-card .link-title { color: #ecfeff; }
+    body.theme-ocean .link-card .link-arrow { color: rgba(34, 211, 238, 0.4); }
+    body.theme-ocean .link-card:hover .link-arrow { color: #67e8f9; }
+    body.theme-ocean .avatar-circle {
+      background: linear-gradient(135deg, #0891b2, #0ea5e9);
+      box-shadow: 0 0 40px rgba(8, 145, 178, 0.4), 0 0 80px rgba(14, 165, 233, 0.15);
+    }
+    body.theme-ocean .footer-text { color: rgba(120, 190, 210, 0.45); }
+    body.theme-ocean .footer-text a { color: rgba(150, 220, 240, 0.65); }
+
+    /* ===== MIDNIGHT THEME ===== */
+    body.theme-midnight .bg-layer {
+      background: #000000;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(30, 30, 30, 0.5) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(25, 25, 25, 0.4) 0%, transparent 40%);
+    }
+    body.theme-midnight .bg-overlay {
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 100px,
+        rgba(255,255,255,0.008) 100px,
+        rgba(255,255,255,0.008) 101px
+      );
+    }
+    body.theme-midnight { color: #d4d4d4; }
+    body.theme-midnight .profile-name { color: #ffffff; }
+    body.theme-midnight .profile-bio { color: rgba(200, 200, 200, 0.7); }
+    body.theme-midnight .link-card {
+      background: rgba(20, 20, 20, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+    body.theme-midnight .link-card:hover {
+      background: rgba(30, 30, 30, 0.9);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    body.theme-midnight .link-card .link-icon { color: #a3a3a3; }
+    body.theme-midnight .link-card .link-title { color: #f5f5f5; }
+    body.theme-midnight .link-card .link-arrow { color: rgba(163, 163, 163, 0.3); }
+    body.theme-midnight .link-card:hover .link-arrow { color: #d4d4d4; }
+    body.theme-midnight .avatar-circle {
+      background: linear-gradient(135deg, #404040, #737373);
+      box-shadow: 0 0 40px rgba(255, 255, 255, 0.05), 0 0 80px rgba(255, 255, 255, 0.02);
+    }
+    body.theme-midnight .footer-text { color: rgba(150, 150, 150, 0.35); }
+    body.theme-midnight .footer-text a { color: rgba(200, 200, 200, 0.5); }
+
+    /* ===== NEON THEME ===== */
+    body.theme-neon .bg-layer {
+      background: #000000;
+    }
+    body.theme-neon .bg-overlay {
+      background:
+        radial-gradient(ellipse 40% 30% at 15% 80%, rgba(0, 255, 100, 0.03) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 85% 20%, rgba(255, 0, 200, 0.03) 0%, transparent 60%);
+      animation: neonFlicker 6s ease-in-out infinite alternate;
+    }
+    @keyframes neonFlicker {
+      0%, 90%, 100% { opacity: 1; }
+      92% { opacity: 0.85; }
+      94% { opacity: 1; }
+    }
+    body.theme-neon { color: #00ff66; }
+    body.theme-neon .profile-name {
+      color: #00ff66;
+      text-shadow: 0 0 10px rgba(0, 255, 102, 0.5), 0 0 30px rgba(0, 255, 102, 0.2);
+    }
+    body.theme-neon .profile-bio { color: rgba(0, 255, 102, 0.6); }
+    body.theme-neon .link-card {
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(0, 255, 102, 0.3);
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.1), inset 0 0 10px rgba(0, 255, 102, 0.02);
+    }
+    body.theme-neon .link-card:nth-child(even) {
+      border-color: rgba(255, 0, 200, 0.3);
+      box-shadow: 0 0 10px rgba(255, 0, 200, 0.1), inset 0 0 10px rgba(255, 0, 200, 0.02);
+    }
+    body.theme-neon .link-card:hover {
+      background: rgba(0, 10, 0, 0.9);
+      border-color: rgba(0, 255, 102, 0.7);
+      box-shadow: 0 0 25px rgba(0, 255, 102, 0.3), 0 0 50px rgba(0, 255, 102, 0.1), inset 0 0 15px rgba(0, 255, 102, 0.05);
+    }
+    body.theme-neon .link-card:nth-child(even):hover {
+      border-color: rgba(255, 0, 200, 0.7);
+      box-shadow: 0 0 25px rgba(255, 0, 200, 0.3), 0 0 50px rgba(255, 0, 200, 0.1), inset 0 0 15px rgba(255, 0, 200, 0.05);
+    }
+    body.theme-neon .link-card .link-icon { color: #00ff66; }
+    body.theme-neon .link-card:nth-child(even) .link-icon { color: #ff00c8; }
+    body.theme-neon .link-card .link-title { color: #00ff66; }
+    body.theme-neon .link-card:nth-child(even) .link-title { color: #ff00c8; }
+    body.theme-neon .link-card .link-arrow { color: rgba(0, 255, 102, 0.3); }
+    body.theme-neon .link-card:nth-child(even) .link-arrow { color: rgba(255, 0, 200, 0.3); }
+    body.theme-neon .link-card:hover .link-arrow { color: #00ff66; }
+    body.theme-neon .link-card:nth-child(even):hover .link-arrow { color: #ff00c8; }
+    body.theme-neon .avatar-circle {
+      background: #000;
+      border: 2px solid #00ff66;
+      box-shadow: 0 0 20px rgba(0, 255, 102, 0.4), 0 0 60px rgba(0, 255, 102, 0.15), inset 0 0 20px rgba(0, 255, 102, 0.1);
+    }
+    body.theme-neon .avatar-circle i,
+    body.theme-neon .avatar-circle .avatar-icon {
+      color: #00ff66;
+      text-shadow: 0 0 10px rgba(0, 255, 102, 0.6);
+    }
+    body.theme-neon .footer-text { color: rgba(0, 255, 102, 0.25); }
+    body.theme-neon .footer-text a { color: rgba(255, 0, 200, 0.5); }
+
+    /* ===== CUSTOM COLOR THEME ===== */
+    body.theme-custom {
+      color: var(--lt-text-color, #ffffff);
+    }
+    body.theme-custom .bg-layer {
+      background: var(--lt-bg-color, #1a1a1a);
+    }
+    body.theme-custom .bg-overlay {
+      display: none;
+    }
+    body.theme-custom .profile-name { color: var(--lt-text-color, #ffffff); }
+    body.theme-custom .profile-bio { color: var(--lt-text-color, #ffffff); opacity: 0.8; }
+    body.theme-custom .link-card {
+      background: var(--lt-card-bg, #333333);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    body.theme-custom .link-card:hover {
+      filter: brightness(1.1);
+      transform: translateY(-2px) scale(1.015);
+    }
+    body.theme-custom .link-card .link-icon { color: var(--lt-text-color, #ffffff); }
+    body.theme-custom .link-card .link-title { color: var(--lt-text-color, #ffffff); }
+    body.theme-custom .link-card .link-arrow { color: var(--lt-text-color, #ffffff); opacity: 0.6; }
+    body.theme-custom .link-card:hover .link-arrow { opacity: 1; }
+    body.theme-custom .avatar-circle {
+      background: var(--lt-card-bg, #333333);
+      border: 2px solid var(--lt-text-color, #ffffff);
+    }
+    body.theme-custom .footer-text { color: var(--lt-text-color, #ffffff); opacity: 0.5; }
+    body.theme-custom .footer-text a { color: var(--lt-text-color, #ffffff); opacity: 0.8; }
+
+    /* ===== MAIN CONTAINER ===== */
+    .container {
+      width: 100%;
+      max-width: 480px;
+      padding: 48px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* ===== AVATAR ===== */
+    .avatar-wrapper {
+      margin-bottom: 20px;
+      animation: avatarFloat 4s ease-in-out infinite;
+    }
+    @keyframes avatarFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .avatar-circle {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .avatar-circle i,
+    .avatar-circle .avatar-icon {
+      font-size: 38px;
+      color: rgba(255,255,255,0.9);
+    }
+    .avatar-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ===== PROFILE TEXT ===== */
+    .profile-section {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .profile-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+    .profile-bio {
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.5;
+      max-width: 340px;
+      margin: 0 auto;
+    }
+
+    /* ===== LINKS ===== */
+    .links-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 48px;
+    }
+    .link-card {
+      display: flex;
+      align-items: center;
+      padding: 20px 24px;
+      border-radius: 20px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    .link-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .link-card:hover {
+      transform: translateY(-2px) scale(1.015);
+    }
+    .link-card:active {
+      transform: translateY(0) scale(0.99);
+    }
+    /* Shine effect on hover */
+    .link-card::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -60%;
+      width: 40%;
+      height: 200%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.06),
+        transparent
+      );
+      transform: skewX(-15deg);
+      transition: left 0.6s ease;
+      pointer-events: none;
+    }
+    .link-card:hover::after {
+      left: 120%;
+    }
+    .link-icon {
+      font-size: 26px;
+      width: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .link-title {
+      flex: 1;
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: -0.1px;
+    }
+    .link-arrow {
+      font-size: 18px;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+    .link-card:hover .link-arrow {
+      transform: translateX(3px);
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      margin-top: auto;
+      padding-top: 20px;
+      padding-bottom: 24px;
+      text-align: center;
+    }
+    .footer-text {
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      transition: color 0.3s ease;
+    }
+    .footer-text a {
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .footer-text a:hover {
+      opacity: 1;
+    }
+
+    /* ===== SKELETON LOADING ===== */
+    .skeleton {
+      animation: skeletonPulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes skeletonPulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.15; }
+    }
+    .skeleton-avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      margin-bottom: 20px;
+    }
+    .skeleton-name {
+      width: 180px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      margin: 0 auto 10px;
+    }
+    .skeleton-bio {
+      width: 240px;
+      height: 16px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.07);
+      margin: 0 auto 36px;
+    }
+    .skeleton-card {
+      width: 100%;
+      height: 56px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.06);
+      margin-bottom: 14px;
+    }
+
+    /* ===== ERROR STATE ===== */
+    .error-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 20px;
+      min-height: 60vh;
+    }
+    .error-state.active {
+      display: flex;
+    }
+    .error-icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      opacity: 0.3;
+      color: rgba(255,255,255,0.5);
+    }
+    .error-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 12px;
+    }
+    .error-desc {
+      font-size: 15px;
+      color: rgba(255,255,255,0.4);
+      max-width: 300px;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+    .error-link {
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      padding: 10px 24px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+    .error-link:hover {
+      border-color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* ===== CONTENT STATE ===== */
+    .content-state { display: none; }
+    .content-state.active { display: flex; flex-direction: column; align-items: center; }
+    .loading-state { display: flex; flex-direction: column; align-items: center; }
+    .loading-state.hidden { display: none; }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 480px) {
+      .container { padding: 36px 16px 32px; }
+      .profile-name { font-size: 24px; }
+      .avatar-circle { width: 88px; height: 88px; }
+      .avatar-circle i,
+      .avatar-circle .avatar-icon { font-size: 34px; }
+    }
+  </style>
+</head>
+<body class="theme-aurora">
+  <div class="bg-layer"></div>
+  <div class="bg-overlay"></div>
+
+  <div class="container">
+    <!-- LOADING SKELETON -->
+    <div class="loading-state" id="loadingState">
+      <div class="skeleton-avatar skeleton"></div>
+      <div class="skeleton-name skeleton"></div>
+      <div class="skeleton-bio skeleton"></div>
+      <div style="width:100%">
+        <div class="skeleton-card skeleton"></div>
+        <div class="skeleton-card skeleton" style="animation-delay:0.15s"></div>
+        <div class="skeleton-card skeleton" style="animation-delay:0.3s"></div>
+        <div class="skeleton-card skeleton" style="animation-delay:0.45s"></div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-state" id="contentState">
+      <div class="avatar-wrapper">
+        <div class="avatar-circle" id="avatarCircle"></div>
+      </div>
+      <div class="profile-section">
+        <h1 class="profile-name" id="profileName"></h1>
+        <p class="profile-bio" id="profileBio"></p>
+      </div>
+      <div class="links-container" id="linksContainer"></div>
+    </div>
+
+    <!-- ERROR -->
+    <div class="error-state" id="errorState">
+      <div class="error-icon"><i class="fa-solid fa-link-slash"></i></div>
+      <h2 class="error-title">Página no encontrada</h2>
+      <p class="error-desc">Este Linktree no existe o ha sido eliminado. Verifica que el enlace sea correcto.</p>
+      <a href="/" class="error-link">Ir a QR Aura</a>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer" id="footer" style="display:none">
+      <p class="footer-text">Creado con <a href="/">QR Aura</a> ✨</p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // === Preset avatar map ===
+      const presetIcons = {
+        user: 'fa-solid fa-user',
+        star: 'fa-solid fa-star',
+        heart: 'fa-solid fa-heart',
+        code: 'fa-solid fa-code',
+        music: 'fa-solid fa-music',
+        camera: 'fa-solid fa-camera',
+        rocket: 'fa-solid fa-rocket',
+        bolt: 'fa-solid fa-bolt'
+      };
+
+      // === Extract ID from URL path /lt/:id ===
+      function getLinktreeId() {
+        const path = window.location.pathname;
+        const match = path.match(/^\/lt\/([^/]+)\/?$/);
+        return match ? match[1] : null;
+      }
+
+      // === Show error state ===
+      function showError() {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('contentState').classList.remove('active');
+        document.getElementById('errorState').classList.add('active');
+      }
+
+      // === Render avatar ===
+      function renderAvatar(avatar) {
+        const el = document.getElementById('avatarCircle');
+        if (!avatar) {
+          el.innerHTML = '<i class="fa-solid fa-user"></i>';
+          return;
+        }
+        if (avatar.startsWith('preset:')) {
+          const presetName = avatar.replace('preset:', '').trim();
+          const iconClass = presetIcons[presetName] || 'fa-solid fa-user';
+          el.innerHTML = '<i class="' + iconClass + '"></i>';
+        } else if (avatar.startsWith('data:') || avatar.startsWith('http')) {
+          el.innerHTML = '<img src="' + avatar + '" alt="Avatar" loading="eager">';
+        } else {
+          el.innerHTML = '<i class="fa-solid fa-user"></i>';
+        }
+      }
+
+      // === Render link card ===
+      function createLinkCard(link, index) {
+        const a = document.createElement('a');
+        a.className = 'link-card';
+        a.href = link.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.setAttribute('aria-label', link.title);
+
+        let iconHtml = '';
+        if (link.iconType === 'custom' && link.customIcon) {
+          iconHtml = '<span class="link-icon"><img src="' + link.customIcon + '" alt="Icon" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"></span>';
+        } else {
+          const iconClass = link.icon || 'fa-solid fa-link';
+          iconHtml = '<span class="link-icon"><i class="' + iconClass + '"></i></span>';
+        }
+
+        a.innerHTML =
+          iconHtml +
+          '<span class="link-title">' + escapeHtml(link.title) + '</span>' +
+          '<span class="link-arrow"><i class="fa-solid fa-chevron-right"></i></span>';
+
+        // Stagger animation
+        setTimeout(function () {
+          a.style.transition = 'opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease';
+          a.classList.add('visible');
+        }, 80 + index * 80);
+
+        return a;
+      }
+
+      // === HTML escape ===
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // === Apply theme ===
+      function applyTheme(themeObj) {
+        let t = 'aurora';
+        
+        // Reset custom styles first
+        document.body.style.removeProperty('--lt-bg-color');
+        document.body.style.removeProperty('--lt-card-bg');
+        document.body.style.removeProperty('--lt-text-color');
+        document.querySelector('.bg-layer').style.backgroundImage = '';
+        document.querySelector('.bg-layer').style.backgroundSize = '';
+        document.querySelector('.bg-layer').style.backgroundPosition = '';
+        document.querySelector('.bg-layer').style.backgroundRepeat = '';
+        document.querySelector('.bg-overlay').style.background = '';
+        document.querySelector('.bg-overlay').style.backdropFilter = '';
+
+        // Clean up video tag if exists
+        const existingVid = document.querySelector('.bg-layer video');
+        if (existingVid) existingVid.remove();
+
+        if (typeof themeObj === 'string') {
+          const validThemes = ['aurora', 'sunset', 'ocean', 'midnight', 'neon'];
+          t = validThemes.includes(themeObj) ? themeObj : 'aurora';
+          document.body.className = 'theme-' + t;
+        } else if (themeObj && typeof themeObj === 'object') {
+          if (themeObj.type === 'image' && themeObj.customImage) {
+            // Apply custom image background + glass effect
+            document.body.className = 'theme-ocean'; // fallback text colors
+            const bgSize = themeObj.customBgSize || 'cover';
+            const bgBlur = themeObj.customBgBlur || 0;
+            const bgLayer = document.querySelector('.bg-layer');
+            
+            if (themeObj.customBgMediaType === 'video') {
+              const vid = document.createElement('video');
+              vid.src = themeObj.customImage;
+              vid.autoplay = true;
+              vid.loop = true;
+              vid.muted = true;
+              vid.playsInline = true;
+              vid.style.width = '100%';
+              vid.style.height = '100%';
+              vid.style.objectFit = bgSize;
+              vid.style.position = 'absolute';
+              vid.style.top = '0';
+              vid.style.left = '0';
+              vid.style.filter = 'blur(' + bgBlur + 'px)';
+              bgLayer.appendChild(vid);
+            } else {
+              bgLayer.style.backgroundImage = 'url(' + themeObj.customImage + ')';
+              bgLayer.style.backgroundSize = bgSize;
+              bgLayer.style.backgroundPosition = 'center';
+              bgLayer.style.backgroundAttachment = 'fixed';
+              bgLayer.style.backgroundRepeat = 'no-repeat';
+              bgLayer.style.filter = 'blur(' + bgBlur + 'px)';
+            }
+            
+            document.querySelector('.bg-overlay').style.background = 'rgba(0,0,0,0.5)';
+            document.querySelector('.bg-overlay').style.backdropFilter = 'blur(4px)';
+          } else if (themeObj.type === 'color') {
+            document.body.className = 'theme-custom';
+            if (themeObj.customColorBg) document.body.style.setProperty('--lt-bg-color', themeObj.customColorBg);
+            if (themeObj.customColorCard) document.body.style.setProperty('--lt-card-bg', themeObj.customColorCard);
+            if (themeObj.customColorText) document.body.style.setProperty('--lt-text-color', themeObj.customColorText);
+          } else {
+            const preset = themeObj.presetName || 'aurora';
+            const validThemes = ['aurora', 'sunset', 'ocean', 'midnight', 'neon'];
+            t = validThemes.includes(preset) ? preset : 'aurora';
+            document.body.className = 'theme-' + t;
+          }
+        } else {
+          document.body.className = 'theme-aurora';
+        }
+      }
+
+      // === Set SEO meta ===
+      function setSEO(displayName, bio) {
+        document.title = displayName + ' - Links | QR Aura';
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) {
+          metaDesc.setAttribute('content', bio || displayName + ' — enlaces personales');
+        }
+        // OG tags
+        let ogTitle = document.querySelector('meta[property="og:title"]');
+        if (!ogTitle) {
+          ogTitle = document.createElement('meta');
+          ogTitle.setAttribute('property', 'og:title');
+          document.head.appendChild(ogTitle);
+        }
+        ogTitle.setAttribute('content', displayName + ' - Links | QR Aura');
+
+        let ogDesc = document.querySelector('meta[property="og:description"]');
+        if (!ogDesc) {
+          ogDesc = document.createElement('meta');
+          ogDesc.setAttribute('property', 'og:description');
+          document.head.appendChild(ogDesc);
+        }
+        ogDesc.setAttribute('content', bio || displayName + ' — enlaces personales');
+      }
+
+      // === Render page ===
+      function renderPage(data) {
+        const profile = data.profile || {};
+        const displayName = profile.displayName || data.name || 'Mi Linktree';
+        const bio = profile.bio || '';
+        const avatar = profile.avatar || 'preset:user';
+        const links = data.links || [];
+        const theme = data.theme || 'aurora';
+
+        // Apply theme
+        applyTheme(theme);
+
+        // SEO
+        setSEO(displayName, bio);
+
+        // Avatar
+        renderAvatar(avatar);
+
+        // Profile
+        document.getElementById('profileName').textContent = displayName;
+        document.getElementById('profileBio').textContent = bio;
+        if (!bio) {
+          document.getElementById('profileBio').style.display = 'none';
+        }
+
+        // Links
+        const container = document.getElementById('linksContainer');
+        container.innerHTML = '';
+        links.forEach(function (link, i) {
+          container.appendChild(createLinkCard(link, i));
+        });
+
+        // Show content
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('contentState').classList.add('active');
+        document.getElementById('footer').style.display = 'block';
+      }
+
+      // === Init ===
+      async function init() {
+        const id = getLinktreeId();
+        if (!id) {
+          showError();
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/linktree/' + encodeURIComponent(id));
+          if (!res.ok) {
+            showError();
+            return;
+          }
+          const data = await res.json();
+          renderPage(data);
+        } catch (err) {
+          console.error('Error cargando Linktree:', err);
+          showError();
+        }
+      }
+
+      // Start when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>
